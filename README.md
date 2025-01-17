@@ -1,4 +1,5 @@
 # Project Tasks
+```
 [ ] Basic display for:
   [ ] TicTacToe
   [ ] Checkers
@@ -13,6 +14,8 @@
   [ ] MinMaxAlgorithm Visualization:
     [ ] Algo implementation
     [ ] Display steps in tree format
+  [ ] Alphabeta Pruning
+    [ ] Extend to "cross out" moves in the tree format
   [ ] Evaluate function
 
 [ ] TicTacToe:
@@ -21,4 +24,6 @@
   [ ] MinMax:
     [ ] Algo implementation
     [ ] Display steps in tree format
-  
+  [ ] Alphabeta Pruning
+    [ ] Extend to "cross out" moves in tree format
+```  
