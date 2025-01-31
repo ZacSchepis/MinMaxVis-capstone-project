@@ -23,7 +23,7 @@ public:
     explicit Board(QWidget *parent = nullptr, int r = 3, int c = 3);
     QWidget draw_board();
     int place(int r, int c, PieceType piece);
-    virtual void map_piece(PieceType p_type);
+    // virtual void map_piece(PieceType p_type);
     // int place(int p, int piece);
 protected:
     void paintEvent(QPaintEvent* event) override;
