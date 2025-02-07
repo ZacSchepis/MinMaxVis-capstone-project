@@ -49,7 +49,6 @@ public:
      * @return -1 (out of bounds) or 0 (success)
      */
     int place(int r, int c, PieceType piece);
-
     /**
      * @brief Board::map_piece Schepis-2/7/25
      * useful in derived classes to assign piece icons
@@ -66,6 +65,7 @@ public:
      */
     void update_cell(int row, int col);
     ~Board();
+
 protected:
     void paintEvent(QPaintEvent* event) override;
 
