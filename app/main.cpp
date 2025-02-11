@@ -1,5 +1,7 @@
 #include "mainwindow.h"
-#include <QApplication>
+#include "QApplication"
+#include "QPushButton"
+#include "TreeGraphics.h"
 #include "tictactoe.h"
 
 int main(int argc, char *argv[]) {
@@ -7,8 +9,11 @@ int main(int argc, char *argv[]) {
     MainWindow window;
     window.setWindowTitle("MinMax Visualizers");
 
-    TicTacToe board_game(&window);
-    window.setCentralWidget(&board_game);
+    TicTacToe_board_game(&window);
+    TreeGraphics treeWidget;
+    treeWidget.show();
+
+    window.setCentralWidget(&board_game); 
     window.show();
 
     return app.exec();
