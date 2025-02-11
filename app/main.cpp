@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QPushButton>
+#include "TreeGraphics.h"
+
 
 // #include "sample_board.h"
 #include "tictactoe.h"
@@ -16,7 +18,8 @@ int main(int argc, char *argv[]) {
     board_game.place(1,2, P2);
     // This will set a space to be empty
     // board_game.place(2,2, empty_state);
-    
+    TreeGraphics treeWidget;
+    treeWidget.show();
     window.setCentralWidget(&board_game);
     window.show();
     return app.exec();
