@@ -10,22 +10,22 @@ TicTacToe::TicTacToe(QWidget *parent) : Board(parent, 3, 3) {
         for (int j = 0; j < 3; ++j) {
             QPushButton* button = qobject_cast<QPushButton*>(grid->itemAtPosition(i, j)->widget());
             connect(button, &QPushButton::clicked, [this, i, j]() {
-                this->moveoftheplayer(i, j);
+                this->Player_move(i, j);
             });
         }
     }
 }
 
 // this function manages a player's move.
-void TicTacToe::moveoftheplayer(int row, int column) {
+void TicTacToe::Player_move(int row, int column) {
     if (get_piece_at(row, column) == empty_state) {
         place(row, column, P1);
-        if (Detectingthewin(P1)) {
-            DetectingtheEnd("Congrats. You have won the game!!!!!");
-        } else if (Detectingthedraw()) {
-            DetectingtheEnd("It's a draw!!!!");
+        if (Findout_Win(P1)) {
+            Findout_End("Congrats. You have won the game!!!!!");
+        } else if (Findout_draw()) {
+            Findout_End("It's a draw!!!!");
         } else {
-            Moveofthecomputer();
+            Computer_move();
         }
     } else {
         QMessageBox::warning(this, "Please make a valid move", "This cell is already occupied!");
@@ -34,21 +34,21 @@ void TicTacToe::moveoftheplayer(int row, int column) {
 
 
 // this function manages the computer's move.
-void TicTacToe::Moveofthecomputer() {
+void TicTacToe::Computer_move() {
     std::pair<int, int> IdealMove = BestMoveCalculation();
     if (IdealMove.first != -1) { // This will dtect the possible move in the game
         place(IdealMove.first, IdealMove.second, P2);
-        if (Detectingthewin(P2)) {
-            DetectingtheEnd("The computer has won the game.");
-        } else if (Detectingthedraw()) {
-            DetectingtheEnd("It's a draw.");
+        if (Findout_Win(P2)) {
+            Findout_End("The computer has won the game.");
+        } else if (Findout_draw()) {
+            Findout_End("It's a draw.");
         }
     }
 }
 
 // Sansar 02/08/2025
 // This function helps in the detection of the win by detecting if the player have achieved three pieces in the diagonal, row or column
-bool TicTacToe::Detectingthewin(PieceType player) {
+bool TicTacToe::Findout_Win(PieceType player) {
     for (int i = 0; i < 3; i++) {
         if (get_piece_at(i, 0) == player && get_piece_at(i, 1) == player && get_piece_at(i, 2) == player) return true;
         if (get_piece_at(0, i) == player && get_piece_at(1, i) == player && get_piece_at(2, i) == player) return true;
@@ -60,7 +60,7 @@ bool TicTacToe::Detectingthewin(PieceType player) {
 
 
 // This function detects the draw in the game
-bool TicTacToe::Detectingthedraw() {
+bool TicTacToe::Findout_draw() {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (get_piece_at(i, j) == empty_state) return false;
@@ -71,7 +71,7 @@ bool TicTacToe::Detectingthedraw() {
 
 
 // This function asks the player when they wish to begin a new game and shows a message box with the round's result.
-void TicTacToe::DetectingtheEnd(const QString& result) {
+void TicTacToe::Findout_End(const QString& result) {
     QMessageBox msgBox;
     msgBox.setWindowTitle("!!!Game Over!!!");
     msgBox.setText(result);
@@ -80,13 +80,13 @@ void TicTacToe::DetectingtheEnd(const QString& result) {
     msgBox.setDefaultButton(QMessageBox::Yes);
     int ret = msgBox.exec();
     if (ret == QMessageBox::Yes) {
-        restartTheGame();
+        Restart_Game();
     }
 }
 
 
 // This function will help in restarting of the game if the user wants to restart it will empty all the cells in the board
-void TicTacToe::restartTheGame() {
+void TicTacToe::Restart_Game() {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             place(i, j, empty_state);
@@ -97,9 +97,9 @@ void TicTacToe::restartTheGame() {
 
 // Here we are implementing the mini-max algorithm recursively and calculating the best move by checking the future possible best move
 int TicTacToe::MinMax(int recursionLevel, bool isMaximizing) {
-    if (Detectingthewin(P2)) return 10;
-    if (Detectingthewin(P1)) return -10;
-    if (Detectingthedraw()) return 0;
+    if (Findout_Win(P2)) return 10;
+    if (Findout_Win(P1)) return -10;
+    if (Findout_draw()) return 0;
 
     if (isMaximizing) {
         int MaxScore = INT_MIN;
