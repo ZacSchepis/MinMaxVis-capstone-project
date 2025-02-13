@@ -13,15 +13,14 @@ public:
     explicit TicTacToe(QWidget *parent = nullptr);
 
 private:
-    void moveoftheplayer(int r, int c);
-    void Moveofthecomputer();
-    bool Detectingthewin(PieceType player);
-    bool Detectingthedraw();
-    void DetectingtheEnd(const QString& result);
-    void restartTheGame();
+    void Player_move(int r, int c);
+    void Computer_move();
+    bool Findout_Win(PieceType player);
+    bool Findout_draw();
+    void Findout_End(const QString& result);
+    void Restart_Game();
     int MinMax(int recursionLevel, bool isMaximizing);
     std::pair<int, int> BestMoveCalculation();
 };
 
 #endif // TICTACTOE_H
-
