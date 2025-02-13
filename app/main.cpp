@@ -9,11 +9,11 @@ int main(int argc, char *argv[]) {
     MainWindow window;
     window.setWindowTitle("MinMax Visualizers");
 
-    TicTacToe_board_game(&window);
+    TicTacToe board_game(&window);
     TreeGraphics treeWidget;
     treeWidget.show();
 
-    window.setCentralWidget(&board_game); 
+    window.setCentralWidget(&board_game);
     window.show();
 
     return app.exec();
