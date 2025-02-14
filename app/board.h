@@ -19,6 +19,8 @@ private:
     PieceType** board_state;
     int cell_size;
     std::map<PieceType, QString> piece_maps;
+//private slots:
+//    void handleButton(int row, int col);
 public:
     QGridLayout *grid;
     explicit Board(QWidget *parent = nullptr, int r = 3, int c = 3);
@@ -66,6 +68,9 @@ public:
     void update_cell(int row, int col);
     ~Board();
 
+
+    void set_styles(QString const &styles);
+    int get_size(int level);
 protected:
     void paintEvent(QPaintEvent* event) override;
 
