@@ -1,19 +1,17 @@
 #include "mainwindow.h"
-<<<<<<< HEAD
 #include <QApplication>
 #include <QPushButton>
 #include <QTimer>
 // #include "sample_board.h"
-//#include "tictactoe.h"
-#include "checkers.h"
+// #include "tictactoe.h"
+// #include "checkers.h"
 #include <windows.h>
-=======
+
 #include "QApplication"
 #include "QPushButton"
 #include "TreeGraphics.h"
 #include "tictactoe.h"
 
->>>>>>> origin/main
 int main(int argc, char *argv[]) {
 //#ifdef _WIN32
 //    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
