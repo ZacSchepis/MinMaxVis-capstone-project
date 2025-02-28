@@ -6,6 +6,9 @@ struct PiecePos {
     int row;
     int col;
     PieceType piece;
+    bool is_king = false;
+    int move_score = 0;
+    bool directionUp = false;
 };
 
 class Checkers : public Board
@@ -20,22 +23,37 @@ private:
 //    PiecePos piece_stack[24];
 //    int stack_top;
 //    void unpop();
+    int evaluate_board();
 //    PiecePos pop_piece();
 //    void update_piece_counter
+    bool is_terminal_node();
+    bool left_right_check(PiecePos p);
+    bool no_legal_moves(PieceType p);
+    void remove_place(PiecePos p, PieceType replace_with);
+    std::vector<PiecePos> generate_moves(PiecePos start);
+    PiecePos pieceToClick;
+    PiecePos pieceFromClick;
+    void setClickedPiece(int r, int c);
+    void toggle_space_connection(bool status);
 public:
     explicit Checkers(QWidget *parent=nullptr);
-    int populate_board();
-    int get_piece_count(PieceType p);
+    int populate_board(bool pVsAi);
     PiecePos get_piece_at_pos(int row, int col);
-//    PieceType overtake();
     bool is_p1turn();
     void add_place(int row, int col, PieceType p);
-    int take_turn();
+//    int take_turn();
     bool can_place_at(int row, int col);
     int check_move(PieceType p, int row, int col);
+    bool validate_player_move();
+    bool take_player_move();
     void turns(int t);
-    bool can_capture(PiecePos from, PiecePos to, int offset);
-    void moving_unset(PiecePos p_old, PiecePos p_new);
+//    PiecePos can_capture(PiecePos from, PiecePos to, bool intermediate, int row_offset, int col_offset);
+    bool king_me(PiecePos p);
+    bool can_capture(PiecePos from, PiecePos to, int row_offset, int col_offset);
+    void moving_unset(PiecePos p_old, PiecePos p_new); 
+    std::pair<int, PiecePos> pvs(PiecePos node, int depth, int alpha, int beta, int colour);
+    void find_best_move();
+
 //private slots:
 //    void handleButton() override;
 };
