@@ -30,21 +30,26 @@ Checkers::Checkers(QWidget *parent) : Board(parent, 8,8) {
 
 void Checkers::setClickedPiece(int r, int c){
     PiecePos initialClickStates = {-1, -1, error_state, false, false};
-
+    if(!this->is_p1turn()) {
+        std::cout << "It isn't your turn :(" << std::endl;
+    }
     if(pieceFromClick.piece == error_state && pieceToClick.piece == error_state ){
         pieceFromClick = get_piece_at_pos(r, c);
         std::cout << "Set from: P" <<pieceFromClick.piece <<" (" << pieceFromClick.row << ", " << pieceFromClick.col <<")" << std::endl;
     } else if(pieceFromClick.piece != error_state && pieceToClick.piece == error_state){
         pieceToClick = get_piece_at_pos(r, c);
         std::cout << "Set to: P" <<pieceToClick.piece <<" (" << pieceToClick.row << ", " << pieceToClick.col <<")" << std::endl;
-        if(validate_player_move()){
-            if(!take_player_move()){
+        if(validate_move(pieceFromClick, pieceToClick)){
+            if(!make_move(pieceFromClick, pieceToClick)){
                 std::cout << "Invalid move !!!" << std::endl;
             }
             repaint();
         }
         pieceToClick = initialClickStates;
         pieceFromClick = initialClickStates;
+        this->p1_turn = false;
+        find_best_move();
+        this->p1_turn = true;
         std::cout << "Reset both pieces after making move" << std::endl;
 
     } else {
@@ -53,6 +58,7 @@ void Checkers::setClickedPiece(int r, int c){
         std::cout << "Reset both pieces" << std::endl;
 
     }
+
 }
 void Checkers::toggle_space_connection(bool status){
     for(int r=0; r< get_size(1); r++){
@@ -90,50 +96,61 @@ int Checkers::populate_board(bool pVsAi) {
 
 
 
-bool Checkers::validate_player_move() {
-    if(pieceFromClick.piece < P1){
+bool Checkers::validate_move(PiecePos from, PiecePos to) {
+    if(from.piece < P1){
         std::cout << "Not a player?" << std::endl;
         return false;
     }
-    bool shouldGoUp = pieceFromClick.piece == P1;
-    for(const auto possible_move : generate_moves(pieceFromClick)){
-        if(!can_place_at(possible_move.row, possible_move.col) || possible_move.piece != pieceToClick.piece){
+    bool shouldGoUp = from.piece == P1;
+    auto possible_moves = generate_moves(from);
+    for(const auto possible_move : generate_moves(from)){
+        if(!can_place_at(possible_move.row, possible_move.col) || possible_move.piece != to.piece){
             continue;
         }
-        if(possible_move.row == pieceToClick.row && possible_move.col == pieceToClick.col){
-            if(shouldGoUp == possible_move.directionUp || pieceFromClick.is_king){
+        if(possible_move.row == to.row && possible_move.col == to.col){
+            if(shouldGoUp == possible_move.directionUp || from.is_king){
                 return true;
             }
         }
     }
     return false;
 }
-bool Checkers::take_player_move() {
-    int row_offset = pieceToClick.row - pieceFromClick.row;
-    int col_offset = pieceToClick.col - pieceFromClick.col;
+
+std::vector<PiecePos> deepCopyPieceStack(const std::vector<PiecePos>& original) {
+    std::vector<PiecePos> copy;
+    for (const auto& piece : original) {
+        copy.push_back(piece); // PiecePos should be trivially copyable
+    }
+    return copy;
+}
+
+std::array<int, 2> deepCopyPieceCounter(const std::array<int, 2>& original) {
+    return original; // std::array is trivially copyable
+}
+
+bool Checkers::make_move(PiecePos from, PiecePos to) {
+    int row_offset = to.row - from.row;
+    int col_offset = to.col - from.col;
     std::cout << "Offsets: [" << row_offset << ", " << col_offset << "]" << std::endl;
     if(std::abs(row_offset) == 2 && std::abs(col_offset) == 2){
-        PiecePos offset_piece = get_piece_at_pos(pieceFromClick.row+(row_offset/2), pieceFromClick.col+(col_offset/2));
-        if(can_capture(pieceFromClick, offset_piece, row_offset/2, col_offset/2)) {
+        PiecePos offset_piece = get_piece_at_pos(from.row+(row_offset/2), from.col+(col_offset/2));
+        if(can_capture(from, offset_piece, row_offset/2, col_offset/2)) {
             remove_place(offset_piece, empty_state);
 //            pieceToClick.piece = pieceFromClick.piece;
-            moving_unset(pieceFromClick, pieceToClick);
+            moving_unset(from, to);
             return true;
         }
     } else if(std::abs(row_offset) == 1 && std::abs(col_offset) == 1){
-        if(pieceToClick.piece == empty_state){
+        if(to.piece == empty_state){
 //            pieceToClick.piece = pieceFromClick.piece;
-            moving_unset(pieceFromClick, pieceToClick);
+            moving_unset(from, to);
             return true;
         }
     }
     return false;
 }
 
-//int Checkers::get_piece_count(PieceType p) {
-//    if(p <= empty_state || p >= P2) return -1;
-//    return this->piece_counter[p-1];
-//}
+
 void Checkers::add_place(int row, int col, PieceType p, PiecePos config) {
     if(p == error_state){
         return;
@@ -147,8 +164,6 @@ void Checkers::add_place(int row, int col, PieceType p, PiecePos config) {
         pos.is_king = true;
 
     }
-//    pos.is_king = config.is_king ? true : ;
-//    if()
     int place_res = this->place(row, col, p);
     if(place_res == -1) return;
     if(p == empty_state){
@@ -217,27 +232,23 @@ PiecePos Checkers::get_piece_at_pos(int row, int col) {
 //    PiecePos p_at;
     auto it = find_piece(row, col);
     if(it != piece_stack.end()){
-        std::cout << " Is king? "<<it->is_king << std::endl;
-//        p_at = *it;
+//        std::cout << " Is king? "<<it->is_king << std::endl;
         return (*it);
     } else {
         struct PiecePos p_at = {row, col, p};
         return p_at;
-//        p_at = {row, col, p};
     }
-//    return p_at;
 }
 void Checkers::turns(int t){
     if(t == 0) return;
     QTimer::singleShot(1000, this, [=](){
         repaint();
-//        if(this->take_turn() == 10) return;
         find_best_move();
         repaint();
         this->turns(t-1);
     });
 }
-
+bool Checkers::is_p1turn() {return this->p1_turn;}
 // Find a piece in piece_stack at the given position
 std::vector<PiecePos>::iterator Checkers::find_piece(int row, int col) {
     return std::find_if(piece_stack.begin(), piece_stack.end(),
@@ -293,7 +304,7 @@ void Checkers::remove_place(PiecePos p, PieceType replace_with){
 //    }
 }
 bool Checkers::can_capture(PiecePos from, PiecePos to, int row_offset, int col_offset) {
-    std::cout << "Got offsets: [" << row_offset << ", " << col_offset << "]";
+//    std::cout << "Got offsets: [" << row_offset << ", " << col_offset << "]";
     if(get_piece_at(to.row+row_offset, to.col+col_offset) == empty_state && from.piece != to.piece && to.piece != empty_state){
         return true;
     }
@@ -313,15 +324,15 @@ PiecePos* Checkers::king_me(PiecePos p){
             case P1: row = 0; break;
             default: break;
         }
-        std::cout << " Check row/matchrow: " << row << "/"<< it->row;
+//        std::cout << " Check row/matchrow: " << row << "/"<< it->row;
         if(row != -1 && it->row == row){
             it->is_king = true;
             std::cout << "King!" << std::endl;
             return &(*it);
         }
-        std::cout << "rows didnt match, or not a player piece. ";
+//        std::cout << "rows didnt match, or not a player piece. ";
     }
-    std::cout << "You are not, a millionare :(";
+//    std::cout << "You are not, a millionare :(";
 
     return &DEFAULT_CONFIG;
 }
@@ -334,7 +345,7 @@ std::vector<PiecePos> Checkers::generate_moves(PiecePos start){
     err_move.row = -1;
     err_move.col = -1;
     int row_min = std::min(start.row+2, this->get_size(1)-1);
-    std::cout << "Row max/min " << start.row-2 << "/" << row_min << std::endl;
+//    std::cout << "Row max/min " << start.row-2 << "/" << row_min << std::endl;
     int count = 2;
     bool isUp = true;
     for(int row_ = start.row-2; row_ <= row_min; row_++){
@@ -348,7 +359,7 @@ std::vector<PiecePos> Checkers::generate_moves(PiecePos start){
         }
         else {
             PiecePos left = get_piece_at_pos(row_, (start.col+count));
-            std::cout << "R: " << left.row << ", " << left.col <<", Count: +"<<count << std::endl;
+//            std::cout << "R: " << left.row << ", " << left.col <<", Count: +"<<count << std::endl;
             left.directionUp = isUp;
             PiecePos right = get_piece_at_pos(row_, std::abs(start.col+(-count)));
             right.directionUp = isUp;
@@ -357,10 +368,10 @@ std::vector<PiecePos> Checkers::generate_moves(PiecePos start){
             count = count-1 == 0 ? 2 : count -1;
         }
     }
-    for (const auto& move : moves) {
-        std::cout << "Generated move: (" << move.row << ", " << move.col << ") Direction: "
-                  << (move.directionUp ? "Up" : "Down") << " Piece: " << move.piece << std::endl;
-    }
+//    for (const auto& move : moves) {
+//        std::cout << "Generated move: (" << move.row << ", " << move.col << ") Direction: "
+//                  << (move.directionUp ? "Up" : "Down") << " Piece: " << move.piece << std::endl;
+//    }
     return moves;
 }
 
@@ -383,37 +394,53 @@ int Checkers::evaluate_board(){
 }
 
 std::pair<int, PiecePos> Checkers::pvs(PiecePos node, int depth, int alpha, int beta, int colour) {
-    if(depth == 0 || is_terminal_node()){
+    if (depth == 0 || is_terminal_node()) {
         return std::make_pair(static_cast<int>(colour * evaluate_board()), node);
     }
-    int count = 0;
-    int score = 0;
-    PiecePos best_move = node; // Initialize the best move to the current node
 
-    for(const auto child_move : generate_moves(node)){
-        if(child_move.piece == error_state){
+    int bestScore = -10000 * colour; // Initialize based on colour
+    PiecePos bestMove = node;
+
+    std::vector<PiecePos> possibleMoves = generate_moves(node);
+
+    for (const auto& move : possibleMoves) {
+        if (move.piece == error_state) {
             continue;
         }
-        if(count == 0){
-            score = -pvs(child_move, depth-1, -alpha, -beta, -colour).first;
+
+        // Create a copy of the game state
+        std::vector<PiecePos> originalPieceStack = deepCopyPieceStack(piece_stack);
+        std::array<int, 2> originalPieceCounter = deepCopyPieceCounter(piece_counter);
+
+        // Apply the move (make sure to also validate here if needed)
+        if(validate_move(node, move)){
+            make_move(node, move);
+        } else {
+            piece_stack = originalPieceStack;
+            piece_counter = originalPieceCounter;
+            continue;
         }
-        else {
-            score = -pvs(child_move, depth-1, -alpha-1, -alpha, -colour).first;
-            if( alpha < score && score < beta){
-                score = -pvs(child_move, depth-1, -beta, -alpha, -colour).first;
-            }
-            alpha = std::max(alpha, score);
-            if(alpha >= beta){
-                break;
-            }
+
+        // Recursive call to pvs
+        int score = pvs(move, depth - 1, -beta, -alpha, -colour).first;
+        score = -score;
+
+        // Restore the original game state
+        piece_stack = originalPieceStack;
+        piece_counter = originalPieceCounter;
+
+        if ((colour == 1 && score > bestScore) || (colour == -1 && score < bestScore)) {
+            bestScore = score;
+            bestMove = move;
         }
-        if(score > alpha){
-            alpha = score;
-            best_move = child_move;
+
+        alpha = std::max(alpha, bestScore);
+        if (alpha >= beta) {
+            break; // Beta cutoff
         }
-        count++;
     }
-    return std::make_pair(alpha, best_move);
+
+    return std::make_pair(bestScore, bestMove);
 }
 
 void Checkers::find_best_move(){
@@ -424,15 +451,28 @@ void Checkers::find_best_move(){
     PiecePos best_piece;
     int beta = 10000;
     for(const auto piece : piece_stack){
+        std::cout << "Did we find something? P" << piece.piece << std::endl;
         if(piece.piece != P2){ continue;}
-         temp_score = pvs(piece, 2, alpha, beta, 1);
-        if(temp_score.first > best_score){
-            best_score = temp_score.first;
-            best_move = temp_score.second;
-            best_piece = piece;
+        else {
+            temp_score = pvs(piece, 2, alpha, beta, -1);
+            if(temp_score.first >= best_score){
+                std::cout << "We got a better score?" << std::endl;
+                best_score = temp_score.first;
+                best_move = temp_score.second;
+                best_piece = piece;
+            }
         }
+
     }
     std::cout << "Best score: "<<best_score << ", Best piece: "<<best_piece.piece << "("<<best_piece.row<<", "<<best_piece.col<<") "<<"Best move: (" << best_move.row << ", "<< best_move.col << ")"<< std::endl;
+    if(validate_move(best_piece, best_move)){
+        if(!make_move(best_piece, best_move)){
+            std::cout << "Invalid move !!!" << std::endl;
+        }
+        repaint();
+    } else {
+        std::cout << "We didnt find any moves :(" << std::endl;
+    }
 }
 
 

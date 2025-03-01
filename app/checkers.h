@@ -15,7 +15,7 @@ class Checkers : public Board
 
 private:
     int populate_row(int r, PieceType p);
-    int piece_counter[2];
+    std::array<int, 2> piece_counter;
     bool p1_turn;
     bool can_take();
     std::vector<PiecePos> piece_stack;
@@ -42,8 +42,8 @@ public:
     void add_place(int row, int col, PieceType p, PiecePos config);
     bool can_place_at(int row, int col);
     int check_move(PieceType p, int row, int col);
-    bool validate_player_move();
-    bool take_player_move();
+    bool validate_move(PiecePos from, PiecePos to);
+    bool make_move(PiecePos from, PiecePos to);
     void turns(int t);
 //    PiecePos can_capture(PiecePos from, PiecePos to, bool intermediate, int row_offset, int col_offset);
     PiecePos* king_me(PiecePos p);
