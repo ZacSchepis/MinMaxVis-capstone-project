@@ -8,13 +8,17 @@
 #include <iostream>
 #include <algorithm>
 #include <random>
+struct PiecePos DEFAULT_CONFIG = {
+       -1, -1, error_state
+};
+
 Checkers::Checkers(QWidget *parent) : Board(parent, 8,8) {
     this->map_piece(P2, ":/res/red_checker32px.png");
     this->map_piece(P1, ":/res/black_checker32px.png");
 //    this->set_styles("QGridLayout::item.alternate {background-color: red;}");
 //    this->setStyle(this->style());
 //    this->stack_top = -1;
-    PiecePos initialClickStates = {-1, -1, error_state, false, 0, false};
+    PiecePos initialClickStates = {-1, -1, error_state, false, false};
     pieceFromClick = initialClickStates;
     pieceToClick = initialClickStates;
     this->piece_counter[P1-1] = 0;
@@ -23,45 +27,10 @@ Checkers::Checkers(QWidget *parent) : Board(parent, 8,8) {
 //    this->piece_stack
 //    this->piece_counter[empty_state] =
 }
-bool Checkers::validate_player_move() {
-    if(pieceFromClick.piece < P1){
-        std::cout << "Not a player?" << std::endl;
-        return false;
-    }
-    bool shouldGoUp = pieceFromClick.piece == P1;
-    for(const auto possible_move : generate_moves(pieceFromClick)){
-        if(!can_place_at(possible_move.row, possible_move.col) || possible_move.piece != pieceToClick.piece){
-            continue;
-        }
-        if(possible_move.row == pieceToClick.row && possible_move.col == pieceToClick.col){
-            if(shouldGoUp == possible_move.directionUp || pieceFromClick.is_king){
-                return true;
-            }
-        }
-    }
-    return false;
-}
-bool Checkers::take_player_move() {
-    int row_offset = pieceToClick.row - pieceFromClick.row;
-    int col_offset = pieceToClick.col - pieceFromClick.col;
-    std::cout << "Offsets: [" << row_offset << ", " << col_offset << "]" << std::endl;
-    if(std::abs(row_offset) == 2 && std::abs(col_offset) == 2){
-        PiecePos offset_piece = get_piece_at_pos(pieceFromClick.row+(row_offset/2), pieceFromClick.col+(col_offset/2));
-        if(can_capture(pieceFromClick, offset_piece, row_offset/2, col_offset/2)) {
-            remove_place(offset_piece, empty_state);
-            moving_unset(pieceFromClick, pieceToClick);
-            return true;
-        }
-    } else if(std::abs(row_offset) == 1 && std::abs(col_offset) == 1){
-        if(pieceToClick.piece == empty_state){
-            moving_unset(pieceFromClick, pieceToClick);
-            return true;
-        }
-    }
-    return false;
-}
+
 void Checkers::setClickedPiece(int r, int c){
-    PiecePos initialClickStates = {-1, -1, error_state, false, 0, false};
+    PiecePos initialClickStates = {-1, -1, error_state, false, false};
+
     if(pieceFromClick.piece == error_state && pieceToClick.piece == error_state ){
         pieceFromClick = get_piece_at_pos(r, c);
         std::cout << "Set from: P" <<pieceFromClick.piece <<" (" << pieceFromClick.row << ", " << pieceFromClick.col <<")" << std::endl;
@@ -105,8 +74,8 @@ int Checkers::populate_board(bool pVsAi) {
     while(t+1 < b-1){
 
         for(int c=0; c<this->get_size(1)-1; c+=2){
-            this->add_place(b, alter ? c : c+1, P1);
-            this->add_place(t, alter ? c+1 : c, P2);
+            this->add_place(b, alter ? c : c+1, P1, DEFAULT_CONFIG);
+            this->add_place(t, alter ? c+1 : c, P2, DEFAULT_CONFIG);
             this->piece_counter[P1-1]++;
             this->piece_counter[P2-1]++;
         }
@@ -117,11 +86,55 @@ int Checkers::populate_board(bool pVsAi) {
     toggle_space_connection(pVsAi);
     return 1;
 }
+
+
+
+
+bool Checkers::validate_player_move() {
+    if(pieceFromClick.piece < P1){
+        std::cout << "Not a player?" << std::endl;
+        return false;
+    }
+    bool shouldGoUp = pieceFromClick.piece == P1;
+    for(const auto possible_move : generate_moves(pieceFromClick)){
+        if(!can_place_at(possible_move.row, possible_move.col) || possible_move.piece != pieceToClick.piece){
+            continue;
+        }
+        if(possible_move.row == pieceToClick.row && possible_move.col == pieceToClick.col){
+            if(shouldGoUp == possible_move.directionUp || pieceFromClick.is_king){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+bool Checkers::take_player_move() {
+    int row_offset = pieceToClick.row - pieceFromClick.row;
+    int col_offset = pieceToClick.col - pieceFromClick.col;
+    std::cout << "Offsets: [" << row_offset << ", " << col_offset << "]" << std::endl;
+    if(std::abs(row_offset) == 2 && std::abs(col_offset) == 2){
+        PiecePos offset_piece = get_piece_at_pos(pieceFromClick.row+(row_offset/2), pieceFromClick.col+(col_offset/2));
+        if(can_capture(pieceFromClick, offset_piece, row_offset/2, col_offset/2)) {
+            remove_place(offset_piece, empty_state);
+//            pieceToClick.piece = pieceFromClick.piece;
+            moving_unset(pieceFromClick, pieceToClick);
+            return true;
+        }
+    } else if(std::abs(row_offset) == 1 && std::abs(col_offset) == 1){
+        if(pieceToClick.piece == empty_state){
+//            pieceToClick.piece = pieceFromClick.piece;
+            moving_unset(pieceFromClick, pieceToClick);
+            return true;
+        }
+    }
+    return false;
+}
+
 //int Checkers::get_piece_count(PieceType p) {
 //    if(p <= empty_state || p >= P2) return -1;
 //    return this->piece_counter[p-1];
 //}
-void Checkers::add_place(int row, int col, PieceType p) {
+void Checkers::add_place(int row, int col, PieceType p, PiecePos config) {
     if(p == error_state){
         return;
     }
@@ -129,12 +142,21 @@ void Checkers::add_place(int row, int col, PieceType p) {
     pos.row = row;
     pos.col = col;
     pos.piece = p;
+    if(config.is_king){
+        std::cout << "!!!We got a king bois!!!" << std::endl;
+        pos.is_king = true;
+
+    }
+//    pos.is_king = config.is_king ? true : ;
+//    if()
     int place_res = this->place(row, col, p);
     if(place_res == -1) return;
     if(p == empty_state){
         return;
     }
     this->piece_stack.push_back(pos);
+    king_me(pos);
+
 }
 
 
@@ -192,10 +214,18 @@ bool Checkers::is_terminal_node() {
 
 PiecePos Checkers::get_piece_at_pos(int row, int col) {
     PieceType p = this->get_piece_at(row, col);
-    struct PiecePos p_at = {
-            row, col, p
-    };
-    return p_at;
+//    PiecePos p_at;
+    auto it = find_piece(row, col);
+    if(it != piece_stack.end()){
+        std::cout << " Is king? "<<it->is_king << std::endl;
+//        p_at = *it;
+        return (*it);
+    } else {
+        struct PiecePos p_at = {row, col, p};
+        return p_at;
+//        p_at = {row, col, p};
+    }
+//    return p_at;
 }
 void Checkers::turns(int t){
     if(t == 0) return;
@@ -207,30 +237,60 @@ void Checkers::turns(int t){
         this->turns(t-1);
     });
 }
+
+// Find a piece in piece_stack at the given position
+std::vector<PiecePos>::iterator Checkers::find_piece(int row, int col) {
+    return std::find_if(piece_stack.begin(), piece_stack.end(),
+                        [row, col](const PiecePos& piece) {
+                            return piece.row == row && piece.col == col;
+                        });
+}
 void Checkers::moving_unset(PiecePos p_old, PiecePos p_new) {
     if(p_new.piece!= error_state && p_old.piece != error_state) {
-        this->add_place(p_new.row, p_new.col, p_old.piece);
-        this->add_place(p_old.row, p_old.col, empty_state);
-//        std::cout << "Moved: " << p_old.row << "," << p_old.col << "," << p_old.piece << std::endl;
-//        std::cout << "To: " << p_new.row << "," << p_new.col << std::endl;
+        this->add_place(p_old.row, p_old.col, empty_state, DEFAULT_CONFIG);
+//        PiecePos possible_king = *this->king_me(p_new);
+        this->wipe_space(p_old);
+        p_new.piece = p_old.piece;
+        this->add_place(p_new.row, p_new.col, p_old.piece, p_old);
     }
 }
-
+PieceType Checkers::wipe_space(PiecePos p){
+    auto it = find_piece(p.row, p.col);
+    if(it != piece_stack.end()){
+        piece_stack.erase(it);
+        return it->piece;
+    }
+    return empty_state;
+}
 void Checkers::remove_place(PiecePos p, PieceType replace_with){
     bool found = false;
-    for(auto it = piece_stack.begin(); it != piece_stack.end(); ++it){
-        if(it->row == p.row && it->col == p.col){
-            if(it->piece > empty_state){
-                piece_counter[it->piece-1]--;
-            }
-            piece_stack.erase(it);
-            found = true;
-            break;
-        }
+//    auto it = find_piece(p.row, p.col);
+//    if(it != piece_stack.end()){
+//        if(it->piece > empty_state){
+//            piece_counter[it->piece-1]--;
+//        }
+//        piece_stack.erase(it);
+//        place(p.row,p.col, replace_with);
+//    }
+    PieceType p_ = wipe_space(p);
+    if(p_ > empty_state){
+        piece_counter[p_-1]--;
+        place(p.row, p.col, empty_state);
     }
-    if(found){
-        place(p.row,p.col, replace_with);
-    }
+//    for(auto it = piece_stack.begin(); it != piece_stack.end(); ++it){
+//        if(it->row == p.row && it->col == p.col){
+//            if(it->piece > empty_state){
+//                piece_counter[it->piece-1]--;
+//            }
+//            piece_stack.erase(it);
+//            found = true;
+//            break;
+//        }
+//    }
+//    if(found){
+//        place(p.row,p.col, replace_with);
+//
+//    }
 }
 bool Checkers::can_capture(PiecePos from, PiecePos to, int row_offset, int col_offset) {
     std::cout << "Got offsets: [" << row_offset << ", " << col_offset << "]";
@@ -242,30 +302,28 @@ bool Checkers::can_capture(PiecePos from, PiecePos to, int row_offset, int col_o
 }
 
 
-bool Checkers::king_me(PiecePos p){
+PiecePos* Checkers::king_me(PiecePos p){
     auto it = std::find_if(piece_stack.begin(), piece_stack.end(), [p](PiecePos p2) {
         return (p.row == p2.row) && (p.col == p2.col);
     });
     if(it != piece_stack.end() && !it->is_king){
         int row = -1;
         switch(it->piece){
-            case P1: {
-                row = this->get_size(1)-1;
-                break;
-            }
-            case P2: {
-                row = 0;
-                break;
-            }
-            default:
-                break;
+            case P2: row = this->get_size(1)-1; break;
+            case P1: row = 0; break;
+            default: break;
         }
-        if(row != -1){
-            it->is_king = it->row == row;
-            return true;
+        std::cout << " Check row/matchrow: " << row << "/"<< it->row;
+        if(row != -1 && it->row == row){
+            it->is_king = true;
+            std::cout << "King!" << std::endl;
+            return &(*it);
         }
+        std::cout << "rows didnt match, or not a player piece. ";
     }
-    return false;
+    std::cout << "You are not, a millionare :(";
+
+    return &DEFAULT_CONFIG;
 }
 
 
@@ -280,36 +338,22 @@ std::vector<PiecePos> Checkers::generate_moves(PiecePos start){
     int count = 2;
     bool isUp = true;
     for(int row_ = start.row-2; row_ <= row_min; row_++){
-        std::cout << "in loop?" <<std::endl;
-        if(row_ < 0 || row_ >= this->get_size(1)){
-            std::cout << "skipping oob? :)" << row_ << std::endl;
+        if(row_ +1< 0 || row_ >= this->get_size(1)){
             continue;
         }
         if(row_ == start.row){
             count = 1;
-            std::cout << count<< " resett? :)" << row_ << std::endl;
-
             isUp = false;
             continue;
         }
-//        if(((row_-1) - start.row) == 0){
-//            count--;
-//            isUp = false;
-//            continue;
         else {
-            std::cout << "adding? :)" <<row_;
             PiecePos left = get_piece_at_pos(row_, (start.col+count));
             std::cout << "R: " << left.row << ", " << left.col <<", Count: +"<<count << std::endl;
-
             left.directionUp = isUp;
             PiecePos right = get_piece_at_pos(row_, std::abs(start.col+(-count)));
-            std::cout << "R: " << right.row << ", " << right.col <<", Count: -"<<count << std::endl;
-
             right.directionUp = isUp;
-
             moves.push_back(left);
             moves.push_back(right);
-//            count--;
             count = count-1 == 0 ? 2 : count -1;
         }
     }
@@ -320,86 +364,6 @@ std::vector<PiecePos> Checkers::generate_moves(PiecePos start){
     return moves;
 }
 
-
-
-
-//int Checkers::take_turn() {
-//    std::random_device rd;
-//    std::mt19937 g(rd());
-//    PiecePos p;
-//    std::cout << "Piece stats: [P1: " << piece_counter[P1-1] << ", P2: " << piece_counter[P2-1] <<"]. Que: ["<< piece_stack.size()<< std::endl;
-////    for(int i=0; i<this->get_size(1); i++){
-////        for(int c=0; c<this->get_size(1);c++){
-////            std::cout<<this->get_piece_at(i,c) << ", ";
-////        }
-////    }
-////    std::cout << "]Stack: " << std::endl;
-////    for(PiecePos &_p : piece_stack){
-////        std::cout << _p.piece << ", ";
-////    }
-//    std::cout<<""<<std::endl;
-////    if(piece_counter[P1] <= 0 || piece_counter[])
-//    if(piece_stack.empty()) return 5;
-//    std::cout<<"mt"<<std::endl;
-//
-//    std::shuffle(this->piece_stack.begin(), this->piece_stack.end(), g);
-//    p = piece_stack.back();
-//    piece_stack.pop_back();
-//    std::cout<<"backpop"<<std::endl;
-//
-//    int row_offset = 0;
-//    if(p.piece == P1)row_offset = -1;
-//    else if(p.piece == P2) row_offset = 1;
-//    else{ std::cout << "early return :( " << p.piece<< std::endl; return 1;}
-//    PiecePos left = get_piece_at_pos(p.row+row_offset, p.col-1);
-//    PiecePos right = get_piece_at_pos(p.row+row_offset, p.col+1);
-//    // capture left piece
-//    std::cout<<"pre"<<p.piece<<std::endl;
-//
-//    if(can_capture(p, left, row_offset, -1)){
-//        remove_place(left, empty_state);
-//        PiecePos next = get_piece_at_pos(p.row+(row_offset*2), p.col-2);
-////        if(left != )
-////        piece_counter[left.piece-1]--;
-//        moving_unset(p, next);
-//        std::cout << "Capture on the left!!!!!By: P" << p.piece << std::endl;
-//        return 1;
-//    // capture right piece
-//    } else if(can_capture(p, right, row_offset, 1)) {
-//        remove_place(right, empty_state);
-//        PiecePos next = get_piece_at_pos(p.row+(row_offset*2), p.col+2);
-//        if(next.piece == p.piece) return 1;
-//
-////        piece_counter[right.piece-1]--;
-//        moving_unset(p, next);
-//        std::cout << "Capture on the right!!!!!By: P" << p.piece << std::endl;
-//        return 1;
-//    } else {
-//        if(left.piece == empty_state){
-//            moving_unset(p,left);
-//        } else if(right.piece == empty_state){
-//            moving_unset(p, right);
-//        } else {
-//            piece_stack.insert(piece_stack.begin(), p);
-//            return 2;
-//        }
-//    }
-//    return 0;
-//}
-//function pvs(node, depth, α, β, color) is
-//  if depth = 0 or node is a terminal node then
-//      return color × the heuristic value of node
-//  for each child of node do
-//      if child is first child then
-//          score := −pvs(child, depth − 1, −β, −α, −color)
-//      else
-//          score := −pvs(child, depth − 1, −α − 1, −α, −color) (* search with a null window *)
-//      if α < score < β then
-//              score := −pvs(child, depth − 1, −β, −α, −color) (* if it failed high, do a full re-search *)
-//      α := max(α, score)
-//      if α ≥ β then
-//          break (* beta cut-off *)
-//   return α
 int Checkers::evaluate_board(){
     int score = 0;
     for(const auto& piece: piece_stack){
@@ -479,9 +443,3 @@ int Checkers::check_move(PieceType p, int row, int col) {
     if(p_at == error_state) return 0;
     return 1;
 }
-//void Checkers::paintEvent(QPaintEvent *){
-//    QTime time = QTime::currentTime();
-//}
-//void Checkers::handleButton(int row, int col) {
-//
-//}

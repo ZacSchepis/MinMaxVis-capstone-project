@@ -7,7 +7,6 @@ struct PiecePos {
     int col;
     PieceType piece;
     bool is_king = false;
-    int move_score = 0;
     bool directionUp = false;
 };
 
@@ -40,19 +39,21 @@ public:
     int populate_board(bool pVsAi);
     PiecePos get_piece_at_pos(int row, int col);
     bool is_p1turn();
-    void add_place(int row, int col, PieceType p);
-//    int take_turn();
+    void add_place(int row, int col, PieceType p, PiecePos config);
     bool can_place_at(int row, int col);
     int check_move(PieceType p, int row, int col);
     bool validate_player_move();
     bool take_player_move();
     void turns(int t);
 //    PiecePos can_capture(PiecePos from, PiecePos to, bool intermediate, int row_offset, int col_offset);
-    bool king_me(PiecePos p);
+    PiecePos* king_me(PiecePos p);
     bool can_capture(PiecePos from, PiecePos to, int row_offset, int col_offset);
     void moving_unset(PiecePos p_old, PiecePos p_new); 
     std::pair<int, PiecePos> pvs(PiecePos node, int depth, int alpha, int beta, int colour);
     void find_best_move();
+    std::vector<PiecePos>::iterator find_piece(int r, int c);
+    PieceType wipe_space(PiecePos p);
+
 
 //private slots:
 //    void handleButton() override;
