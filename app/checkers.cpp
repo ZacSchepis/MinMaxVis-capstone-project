@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <random>
 struct PiecePos DEFAULT_CONFIG = {
-       -1, -1, error_state
+        -1, -1, error_state
 };
 
 Checkers::Checkers(QWidget *parent) : Board(parent, 8,8) {
@@ -30,9 +30,9 @@ Checkers::Checkers(QWidget *parent) : Board(parent, 8,8) {
 
 void Checkers::setClickedPiece(int r, int c){
     PiecePos initialClickStates = {-1, -1, error_state, false, false};
-    if(!this->is_p1turn()) {
-        std::cout << "It isn't your turn :(" << std::endl;
-    }
+//    if(!this->is_p1turn()) {
+//        std::cout << "It isn't your turn :(" << std::endl;
+//    }
     if(pieceFromClick.piece == error_state && pieceToClick.piece == error_state ){
         pieceFromClick = get_piece_at_pos(r, c);
         std::cout << "Set from: P" <<pieceFromClick.piece <<" (" << pieceFromClick.row << ", " << pieceFromClick.col <<")" << std::endl;
@@ -47,9 +47,9 @@ void Checkers::setClickedPiece(int r, int c){
         }
         pieceToClick = initialClickStates;
         pieceFromClick = initialClickStates;
-        this->p1_turn = false;
-        find_best_move();
-        this->p1_turn = true;
+//        this->p1_turn = false;
+//        find_best_move();
+//        this->p1_turn = true;
         std::cout << "Reset both pieces after making move" << std::endl;
 
     } else {

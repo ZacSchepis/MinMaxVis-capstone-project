@@ -48,7 +48,7 @@ public:
 //    PiecePos can_capture(PiecePos from, PiecePos to, bool intermediate, int row_offset, int col_offset);
     PiecePos* king_me(PiecePos p);
     bool can_capture(PiecePos from, PiecePos to, int row_offset, int col_offset);
-    void moving_unset(PiecePos p_old, PiecePos p_new); 
+    void moving_unset(PiecePos p_old, PiecePos p_new);
     std::pair<int, PiecePos> pvs(PiecePos node, int depth, int alpha, int beta, int colour);
     void find_best_move();
     std::vector<PiecePos>::iterator find_piece(int r, int c);
