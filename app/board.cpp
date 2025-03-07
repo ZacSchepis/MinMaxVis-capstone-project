@@ -19,14 +19,14 @@ Board::Board(QWidget *parent, int r, int c)
             board_state[i][j] = empty_state;
             QPushButton *button = new QPushButton(this);
             button->setFixedSize(48,48);
-//            bool is_black = (i + j) % 2 == 1;
+            bool is_black = (i + j) % 2 == 1;
 
-//            button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black":"white"));
+            button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black":"white"));
 //            c_++;
             grid->addWidget(button, i, j);
         }
     }
-    this->set_styles("background-color: white; border:2px solid black;");
+//    this->set_styles("background-color: white; border:2px solid black;");
     setLayout(grid);
 
 }
