@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/red_checker.png</file>
+        <file>res/black_checker.png</file>
+        <file>res/o_tictactoe.png</file>
+        <file>res/x_tictactoe.png</file>
+        <file>res/black_checker32px.png</file>
+        <file>res/o_tictactoe32px.png</file>
+        <file>res/red_checker32px.png</file>
+        <file>res/x_tictactoe32px.png</file>
+    </qresource>
+</RCC>

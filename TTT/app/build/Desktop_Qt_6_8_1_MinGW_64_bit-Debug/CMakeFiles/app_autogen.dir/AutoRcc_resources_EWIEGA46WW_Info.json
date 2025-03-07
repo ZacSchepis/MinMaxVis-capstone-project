@@ -1,0 +1,32 @@
+{
+	"BUILD_DIR" : "C:/Users/manis/OneDrive/Desktop/Repo/app/build/Desktop_Qt_6_8_1_MinGW_64_bit-Debug/app_autogen",
+	"CMAKE_BINARY_DIR" : "C:/Users/manis/OneDrive/Desktop/Repo/app/build/Desktop_Qt_6_8_1_MinGW_64_bit-Debug",
+	"CMAKE_CURRENT_BINARY_DIR" : "C:/Users/manis/OneDrive/Desktop/Repo/app/build/Desktop_Qt_6_8_1_MinGW_64_bit-Debug",
+	"CMAKE_CURRENT_SOURCE_DIR" : "C:/Users/manis/OneDrive/Desktop/Repo/app",
+	"CMAKE_SOURCE_DIR" : "C:/Users/manis/OneDrive/Desktop/Repo/app",
+	"CROSS_CONFIG" : false,
+	"GENERATOR" : "Ninja",
+	"INCLUDE_DIR" : "C:/Users/manis/OneDrive/Desktop/Repo/app/build/Desktop_Qt_6_8_1_MinGW_64_bit-Debug/app_autogen/include",
+	"INPUTS" : 
+	[
+		"C:/Users/manis/OneDrive/Desktop/Repo/app/res/black_checker.png",
+		"C:/Users/manis/OneDrive/Desktop/Repo/app/res/o_tictactoe.png",
+		"C:/Users/manis/OneDrive/Desktop/Repo/app/res/black_checker32px.png",
+		"C:/Users/manis/OneDrive/Desktop/Repo/app/res/o_tictactoe32px.png",
+		"C:/Users/manis/OneDrive/Desktop/Repo/app/res/red_checker32px.png",
+		"C:/Users/manis/OneDrive/Desktop/Repo/app/res/x_tictactoe32px.png",
+		"C:/Users/manis/OneDrive/Desktop/Repo/app/res/red_checker.png",
+		"C:/Users/manis/OneDrive/Desktop/Repo/app/res/x_tictactoe.png"
+	],
+	"LOCK_FILE" : "C:/Users/manis/OneDrive/Desktop/Repo/app/build/Desktop_Qt_6_8_1_MinGW_64_bit-Debug/CMakeFiles/app_autogen.dir/AutoRcc_resources_EWIEGA46WW_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "--no-zstd", "-name", "resources" ],
+	"OUTPUT_CHECKSUM" : "EWIEGA46WW",
+	"OUTPUT_NAME" : "qrc_resources.cpp",
+	"RCC_EXECUTABLE" : "C:/Qt/6.8.1/mingw_64/bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "C:/Users/manis/OneDrive/Desktop/Repo/app/build/Desktop_Qt_6_8_1_MinGW_64_bit-Debug/CMakeFiles/app_autogen.dir/AutoRcc_resources_EWIEGA46WW_Used.txt",
+	"SOURCE" : "C:/Users/manis/OneDrive/Desktop/Repo/app/resources.qrc",
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}
