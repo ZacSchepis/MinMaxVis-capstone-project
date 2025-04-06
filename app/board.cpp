@@ -20,13 +20,12 @@ Board::Board(QWidget *parent, int r, int c)
             QPushButton *button = new QPushButton(this);
             button->setFixedSize(48,48);
             bool is_black = (i + j) % 2 == 1;
-
             button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black":"white"));
 //            c_++;
             grid->addWidget(button, i, j);
         }
     }
-//    this->set_styles("background-color: white; border:2px solid black;");
+    // this->set_styles("background-color: white; border:2px solid black;");
     setLayout(grid);
 
 }
@@ -52,6 +51,35 @@ void Board::update_cell(int row, int col){
     }
 }
 
+void Board::update_stateofBoard(PieceType** newState) {
+    if (!newState) {
+        qDebug() << "ERROR: Attempted to setBoardState with a nullptr!";
+        return;
+    }
+
+    qDebug() << "Setting board state...";
+
+    // Free old board state memory
+    if (board_state) {
+        for (int i = 0; i < rows; i++) {
+            if (board_state[i]) {
+                delete[] board_state[i];
+            }
+        }
+        delete[] board_state;
+    }
+
+    // Allocate new board state
+    board_state = new PieceType*[rows];
+    for (int i = 0; i < rows; i++) {
+        board_state[i] = new PieceType[cols];
+        for (int j = 0; j < cols; j++) {
+            board_state[i][j] = newState[i][j];  // Copy new state
+        }
+    }
+}
+
+
 
 int Board::place(int r, int c, PieceType piece){
     if((r >= rows || r < 0) || (c >= cols || c < 0)) return -1;
@@ -63,6 +91,10 @@ int Board::place(int r, int c, PieceType piece){
 PieceType Board::get_piece_at(int row, int col) {
     if((row >= this->rows || row < 0) || (col >= this->cols || col <0)) return error_state;
     return this->board_state[row][col];
+}
+
+PieceType** Board::Retrieve_stateofBoard() const {
+    return board_state;
 }
 
 int Board::get_cell_size() {return this->cell_size;}

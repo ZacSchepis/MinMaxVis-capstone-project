@@ -1,6 +1,52 @@
 #include "tictactoe.h"
 #include <cstdlib>
 #include <climits>
+#include <QTimer>
+
+PieceType** TicTacToe::Retrieve_stateofBoard() {
+    return Board::Retrieve_stateofBoard();
+}
+
+std::vector<std::pair<int, int>> TicTacToe::find_possiblemove() {
+    std::vector<std::pair<int, int>> moves;
+    PieceType** state = this->Retrieve_stateofBoard();
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (state[i][j] == empty_state) {
+                moves.push_back({i, j});
+            }
+        }
+    }
+    return moves;
+}
+
+void TicTacToe::update_stateofBoard(PieceType** next_stateofBoard) {
+    this->Board::update_stateofBoard(next_stateofBoard);
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            update_cell(i, j);
+        }
+    }
+}
+
+PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c) {
+    if (!state) {
+        return nullptr;
+    }
+
+    PieceType** next_stateofBoard = new PieceType*[3];
+    for (int i = 0; i < 3; i++) {
+        next_stateofBoard[i] = new PieceType[3];
+        for (int j = 0; j < 3; j++) {
+            next_stateofBoard[i][j] = state[i][j];
+        }
+    }
+
+    next_stateofBoard[r][c] = P1;
+    return next_stateofBoard;
+}
 
 TicTacToe::TicTacToe(QWidget *parent) : Board(parent, 3, 3) {
     this->map_piece(P1, ":/res/x_tictactoe32px.png");
@@ -16,38 +62,38 @@ TicTacToe::TicTacToe(QWidget *parent) : Board(parent, 3, 3) {
     }
 }
 
-// this function manages a player's move.
 void TicTacToe::Player_move(int row, int column) {
     if (get_piece_at(row, column) == empty_state) {
         place(row, column, P1);
+        emit move_Executed();
+
         if (Findout_Win(P1)) {
-            Findout_End("Congrats. You have won the game!!!!!");
+            Findout_End("Congrats! You have won the game!");
         } else if (Findout_draw()) {
-            Findout_End("It's a draw!!!!");
+            Findout_End("It's a draw!");
         } else {
-            Computer_move();
+            emit update_tree_Visualization();
+            QTimer::singleShot(500, this, &TicTacToe::Computer_move);
         }
     } else {
-        QMessageBox::warning(this, "Please make a valid move", "This cell is already occupied!");
+        QMessageBox::warning(this, "Invalid Move", "This cell is already occupied!");
     }
 }
 
-
-// this function manages the computer's move.
 void TicTacToe::Computer_move() {
-    std::pair<int, int> IdealMove = BestMoveCalculation();
-    if (IdealMove.first != -1) { // This will dtect the possible move in the game
+    std::pair<int, int> IdealMove = move_bestcalculation();
+    if (IdealMove.first != -1) {
         place(IdealMove.first, IdealMove.second, P2);
+        emit move_Executed();
+
         if (Findout_Win(P2)) {
-            Findout_End("The computer has won the game.");
+            Findout_End("The computer has won.");
         } else if (Findout_draw()) {
             Findout_End("It's a draw.");
         }
     }
 }
 
-// Sansar 02/08/2025
-// This function helps in the detection of the win by detecting if the player have achieved three pieces in the diagonal, row or column
 bool TicTacToe::Findout_Win(PieceType player) {
     for (int i = 0; i < 3; i++) {
         if (get_piece_at(i, 0) == player && get_piece_at(i, 1) == player && get_piece_at(i, 2) == player) return true;
@@ -58,8 +104,6 @@ bool TicTacToe::Findout_Win(PieceType player) {
     return false;
 }
 
-
-// This function detects the draw in the game
 bool TicTacToe::Findout_draw() {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
@@ -69,11 +113,9 @@ bool TicTacToe::Findout_draw() {
     return true;
 }
 
-
-// This function asks the player when they wish to begin a new game and shows a message box with the round's result.
 void TicTacToe::Findout_End(const QString& result) {
     QMessageBox msgBox;
-    msgBox.setWindowTitle("!!!Game Over!!!");
+    msgBox.setWindowTitle("Game Over");
     msgBox.setText(result);
     msgBox.setInformativeText("Do you want to start a new game?");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -84,64 +126,67 @@ void TicTacToe::Findout_End(const QString& result) {
     }
 }
 
-
-// This function will help in restarting of the game if the user wants to restart it will empty all the cells in the board
 void TicTacToe::Restart_Game() {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             place(i, j, empty_state);
         }
     }
+    emit move_Executed();
 }
 
-
-// Here we are implementing the mini-max algorithm recursively and calculating the best move by checking the future possible best move
-int TicTacToe::MinMax(int recursionLevel, bool isMaximizing) {
+int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta) {
     if (Findout_Win(P2)) return 10;
     if (Findout_Win(P1)) return -10;
     if (Findout_draw()) return 0;
 
     if (isMaximizing) {
-        int MaxScore = INT_MIN;
+        int Best_Score = INT_MIN;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (get_piece_at(i, j) == empty_state) {
                     place(i, j, P2);
-                    int Evaluation = MinMax(recursionLevel + 1, false);
+                    int Score = MinMax(recursionLevel + 1, false, alpha, beta);
                     place(i, j, empty_state);
-                    MaxScore = std::max(Evaluation, MaxScore);
+                    Best_Score = std::max(Score, Best_Score);
+                    alpha = std::max(alpha, Score);
+                    if (beta <= alpha) break;
                 }
             }
         }
-        return MaxScore;
+        return Best_Score;
     } else {
-        int MaxScore = INT_MAX;
+        int Worst_Score = INT_MAX;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (get_piece_at(i, j) == empty_state) {
                     place(i, j, P1);
-                    int Evaluation = MinMax(recursionLevel + 1, true);
+                    int Score = MinMax(recursionLevel + 1, true, alpha, beta);
                     place(i, j, empty_state);
-                    MaxScore = std::min(Evaluation, MaxScore);
+                    Worst_Score = std::min(Score, Worst_Score);
+                    beta = std::min(beta, Score);
+                    if (beta <= alpha) break;
                 }
             }
         }
-        return MaxScore;
+        return Worst_Score;
     }
 }
 
-// This function doesthe evaluation all the possible move and give us the best move using the min-max algorithm
-std::pair<int, int> TicTacToe::BestMoveCalculation() {
-    int MaxScore = INT_MIN;
+std::pair<int, int> TicTacToe::move_bestcalculation() {
+    int Best_Score = INT_MIN;
     std::pair<int, int> IdealMove = {-1, -1};
+    int alpha = INT_MIN;
+    int beta = INT_MAX;
+
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (get_piece_at(i, j) == empty_state) {
                 place(i, j, P2);
-                int Evaluation = MinMax(0, false);
+                int Score = MinMax(0, false, alpha, beta);
                 place(i, j, empty_state);
-                if (Evaluation > MaxScore) {
-                    MaxScore = Evaluation;
+                if (Score > Best_Score) {
+                    Best_Score = Score;
                     IdealMove = {i, j};
                 }
             }
