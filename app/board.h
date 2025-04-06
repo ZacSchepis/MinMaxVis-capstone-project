@@ -22,7 +22,9 @@ private:
 //private slots:
 //    void handleButton(int row, int col);
 public:
+    void update_stateofBoard(PieceType** newState);
     QGridLayout *grid;
+    PieceType** Retrieve_stateofBoard() const;
     explicit Board(QWidget *parent = nullptr, int r = 3, int c = 3);
 
     /**

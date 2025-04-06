@@ -1,54 +1,56 @@
 #include "TreeGraphics.h"
 #include <QGraphicsProxyWidget>
 #include <QPen>
-#include "TicTacToe.h"
 
-TreeGraphics::TreeGraphics(QWidget* parent) : QWidget(parent) {
+TreeGraphics::TreeGraphics(QWidget* parent, TicTacToe* game) : QWidget(parent), gameInstance(game) {
     scene = new QGraphicsScene(this);
     view = new QGraphicsView(scene, this);
+    view->setGeometry(10, 10, 1200, 800); // Adjust size to fit expanding tree
 
-    view->setGeometry(10, 10, 800, 600);
+    if (gameInstance) {
+        connect(gameInstance, &TicTacToe::move_Executed, this, &TreeGraphics::update_Tree);
+    }
 
-    int startX = 400;
-    int startY = 50;
-    int treeDepth = 3;
-
-    drawTreeWithBoards(startX, startY, treeDepth, 0);
+    update_Tree();
 }
 
-void TreeGraphics::drawTreeWithBoards(int x, int y, int depth, int level) {
-    if (depth == 0)
+void TreeGraphics::update_Tree() {
+    scene->clear();  // here we are clearing the tree
+    Tree_withBoards(600, 50, 3, 0, gameInstance->Retrieve_stateofBoard());
+}
+
+void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType** state) {
+    if (depth == 0 || state == nullptr) {
         return;
+    }
 
-    const double scaleFactor = 0.5;
-    const int verticalSpacing = 120;
-    const int horizontalSpacing = 100 * depth;
-
+    // here we are creating a new TTT Board deppending on the cureent move
     TicTacToe* board = new TicTacToe();
+    board->update_stateofBoard(state);  // here the board state is being applied
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            QLayoutItem *item = board->grid->itemAtPosition(i, j);
+            if (item) {
+                QWidget *widget = item->widget();
+                if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
+                    button->setDisabled(true);  // we are disbling so that we can't make moves in the board in the tree
+                }
+            }
+        }
+    }
+
     QGraphicsProxyWidget* proxy = scene->addWidget(board);
-    proxy->setScale(scaleFactor);
+    proxy->setScale(0.5);
     proxy->setPos(x, y);
 
-    QRectF boardRect = proxy->boundingRect();
-    int boardWidth  = boardRect.width() * scaleFactor;
-    int boardHeight = boardRect.height() * scaleFactor;
+    std::vector<std::pair<int, int>> possibleMoves = gameInstance->find_possiblemove();
 
-    int parentBottomCenterX = x + boardWidth / 2;
-    int parentBottomCenterY = y + boardHeight;
+    for (size_t i = 0; i < possibleMoves.size(); i++) {
+        int childX = x + (i - possibleMoves.size() / 2) * 100;
+        PieceType** newState = gameInstance->Visualize_Move(state, possibleMoves[i].first, possibleMoves[i].second);
 
-    int childY = y + verticalSpacing;
-
-    for (int i = 0; i < 2; i++) {
-        int childX = (i == 0) ? x - horizontalSpacing : x + horizontalSpacing;
-
-        int childTopCenterX = childX + boardWidth / 2;
-        int childTopCenterY = childY;
-
-        scene->addLine(parentBottomCenterX, parentBottomCenterY,
-                       childTopCenterX, childTopCenterY,
-                       QPen(Qt::black));
-
-        drawTreeWithBoards(childX, childY, depth - 1, level + 1);
+        if (newState) {
+            Tree_withBoards(childX, y + 120, depth - 1, level + 1, newState);
+        }
     }
 }
-
