@@ -2,33 +2,61 @@
 #include <QPushButton.h>
 #include <QIcon.h>
 #include <QCoreApplication.h>
-Board::Board(QWidget *parent, int r, int c)
-    : QWidget{parent}, rows(r), cols(c), cell_size(50)
+#include <QLabel>
+Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
+    : QWidget{parent}, rows(r), cols(c), cell_size(50), right_panel(nullptr), right_layout(nullptr)
 {
-    grid = new QGridLayout(this);
-    // Initializing piece_maps to default values
+    QHBoxLayout *outer_layout = new QHBoxLayout(this);
+
+    // Create the game board grid
+    grid = new QGridLayout();
+    grid->setSpacing(0);
+
     this->map_piece(error_state, "");
     this->map_piece(empty_state, "");
     this->map_piece(P1, "");
     this->map_piece(P2, "");
-    this->setFixedSize(c*this->cell_size, r*this->cell_size);
+
+    // Adjust the width only if right panel is shown
+    int extra_width = showRightPanel ? 150 : 0;
+    this->setFixedSize((c * this->cell_size) + extra_width, r * this->cell_size);
+
+    // Initialize board state and add buttons
     board_state = new PieceType*[rows];
-    for(int i=0; i<r; i++){
+    for (int i = 0; i < r; i++) {
         board_state[i] = new PieceType[cols];
-        for(int j=0; j<c; j++){
+        for (int j = 0; j < c; j++) {
             board_state[i][j] = empty_state;
             QPushButton *button = new QPushButton(this);
-            button->setFixedSize(48,48);
+            button->setFixedSize(48, 48);
             bool is_black = (i + j) % 2 == 1;
-            button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black":"white"));
-//            c_++;
+            button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black" : "white"));
             grid->addWidget(button, i, j);
         }
     }
-    // this->set_styles("background-color: white; border:2px solid black;");
-    setLayout(grid);
 
+    // Wrap the grid in a QWidget
+    QWidget *board_widget = new QWidget(this);
+    board_widget->setLayout(grid);
+    outer_layout->addWidget(board_widget);
+
+    // Conditionally create and add the right panel
+    if (showRightPanel) {
+        right_panel = new QWidget(this);
+        right_panel->setFixedWidth(150);
+        right_panel->setStyleSheet("background-color: #ddd;");
+        right_layout = new QVBoxLayout(right_panel);
+        right_panel->setLayout(right_layout);
+        outer_layout->addWidget(right_panel);
+    }
+
+    setLayout(outer_layout);
 }
+
+
+
+
+
 int Board::map_piece(PieceType p_type, QString resource_name) {
     if(this->piece_maps.count(p_type) == 0) {
         this->piece_maps[p_type] = resource_name;
@@ -116,6 +144,7 @@ void Board::set_styles(QString const &styles) {
 int Board::get_size(int level) {
     return level == 1 ? this->rows : this->cols*this->cols;
 }
-//void Board::handleButton(int row, int col) {
-//
-//}
+
+QVBoxLayout* Board::getRightLayout() {
+    return right_layout;
+}
