@@ -30,6 +30,9 @@ private:
     void Restart_Game();
     int MinMax(int recursionLevel, bool isMaximizing, int alpha = INT_MIN, int beta = INT_MAX);
     std::pair<int, int> move_bestcalculation();
+    QLabel* boardScoreLabel;
+    int updateBoardScore();
+
 };
 
 #endif // TICTACTOE_H

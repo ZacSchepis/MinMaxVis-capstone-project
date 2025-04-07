@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <climits>
 #include <QTimer>
+#include <QLabel>
 
 PieceType** TicTacToe::Retrieve_stateofBoard() {
     return Board::Retrieve_stateofBoard();
@@ -48,9 +49,12 @@ PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c) {
     return next_stateofBoard;
 }
 
-TicTacToe::TicTacToe(QWidget *parent) : Board(parent, 3, 3) {
+TicTacToe::TicTacToe(QWidget *parent) : Board(parent, 3, 3, true) {
+
     this->map_piece(P1, ":/res/x_tictactoe32px.png");
     this->map_piece(P2, ":/res/o_tictactoe32px.png");
+    boardScoreLabel = new QLabel("Board Score:", this);
+    getRightLayout()->addWidget(boardScoreLabel);
 
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -66,6 +70,7 @@ void TicTacToe::Player_move(int row, int column) {
     if (get_piece_at(row, column) == empty_state) {
         place(row, column, P1);
         emit move_Executed();
+        updateBoardScore();
 
         if (Findout_Win(P1)) {
             Findout_End("Congrats! You have won the game!");
@@ -85,6 +90,7 @@ void TicTacToe::Computer_move() {
     if (IdealMove.first != -1) {
         place(IdealMove.first, IdealMove.second, P2);
         emit move_Executed();
+        updateBoardScore();
 
         if (Findout_Win(P2)) {
             Findout_End("The computer has won.");
@@ -133,6 +139,7 @@ void TicTacToe::Restart_Game() {
         }
     }
     emit move_Executed();
+    updateBoardScore();
 }
 
 int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta) {
@@ -194,3 +201,9 @@ std::pair<int, int> TicTacToe::move_bestcalculation() {
     }
     return IdealMove;
 }
+
+int TicTacToe::updateBoardScore() {
+    int score = MinMax(0, true, INT_MIN, INT_MAX);
+    return score;
+}
+

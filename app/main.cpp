@@ -24,16 +24,16 @@ int main(int argc, char *argv[]) {
     //    window.setWindowTitle("MinMax Visualizers");
 
     /*Tic Tac Toe Game Code*/
-    // TicTacToe board_game(&window);
-    // TreeGraphics treeWidget(nullptr, &board_game);
-    // QObject::connect(&board_game, &TicTacToe::update_tree_Visualization, &treeWidget, &TreeGraphics::update_Tree);
-    // QObject::connect(&board_game, &TicTacToe::move_Executed, &treeWidget, &TreeGraphics::update_Tree);
-    // treeWidget.show();
-    /*----------------------------------*/
+    TicTacToe board_game(&window);
+    TreeGraphics treeWidget(nullptr, &board_game);
+    QObject::connect(&board_game, &TicTacToe::update_tree_Visualization, &treeWidget, &TreeGraphics::update_Tree);
+    QObject::connect(&board_game, &TicTacToe::move_Executed, &treeWidget, &TreeGraphics::update_Tree);
+    treeWidget.show();
+    // /*----------------------------------*/
 
     /*Checkers Game Run*/
-    Checkers board_game;
-    board_game.populate_board(true);
+    // Checkers board_game;
+    // board_game.populate_board(true);
     /*------------------------------------*/
 
     //    board_game.turns(20);
