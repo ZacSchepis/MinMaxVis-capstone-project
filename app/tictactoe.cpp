@@ -49,13 +49,24 @@ PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c) {
     return next_stateofBoard;
 }
 
-TicTacToe::TicTacToe(QWidget *parent) : Board(parent, 3, 3, true) {
+TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
+    : Board(parent, 3, 3, enableRightWidget) {
 
     this->map_piece(P1, ":/res/x_tictactoe32px.png");
     this->map_piece(P2, ":/res/o_tictactoe32px.png");
-    boardScoreLabel = new QLabel("Board Score:", this);
-    getRightLayout()->addWidget(boardScoreLabel);
+    if (getRightLayout()) {
+        boardScoreLabel = new QLabel("Board Score:", this);
+        boardScoreLabel->setStyleSheet("color: black;");
+        getRightLayout()->addWidget(boardScoreLabel);
 
+        bestPlayerMoveLabel = new QLabel("Best Move for Player: ", this);
+        bestPlayerMoveLabel->setStyleSheet("color: black;");
+        getRightLayout()->addWidget(bestPlayerMoveLabel);
+
+        bestComputerMoveLabel = new QLabel("Best Move for Computer: ", this);
+        bestComputerMoveLabel->setStyleSheet("color: black;");
+        getRightLayout()->addWidget(bestComputerMoveLabel);
+    }
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             QPushButton* button = qobject_cast<QPushButton*>(grid->itemAtPosition(i, j)->widget());
@@ -71,6 +82,7 @@ void TicTacToe::Player_move(int row, int column) {
         place(row, column, P1);
         emit move_Executed();
         updateBoardScore();
+        updateBestMoves();
 
         if (Findout_Win(P1)) {
             Findout_End("Congrats! You have won the game!");
@@ -91,6 +103,7 @@ void TicTacToe::Computer_move() {
         place(IdealMove.first, IdealMove.second, P2);
         emit move_Executed();
         updateBoardScore();
+        updateBestMoves();
 
         if (Findout_Win(P2)) {
             Findout_End("The computer has won.");
@@ -140,6 +153,8 @@ void TicTacToe::Restart_Game() {
     }
     emit move_Executed();
     updateBoardScore();
+    updateBestMoves();
+
 }
 
 int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta) {
@@ -205,5 +220,35 @@ std::pair<int, int> TicTacToe::move_bestcalculation() {
 int TicTacToe::updateBoardScore() {
     int score = MinMax(0, true, INT_MIN, INT_MAX);
     return score;
+}
+
+void TicTacToe::updateBestMoves() {
+    if (!getRightLayout()) return;
+
+    std::pair<int, int> playerMove = {-1, -1};
+    std::pair<int, int> computerMove = {-1, -1};
+    int bestScore = INT_MAX;
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (get_piece_at(i, j) == empty_state) {
+                place(i, j, P1);
+                int score = MinMax(0, true);
+                place(i, j, empty_state);
+                if (score < bestScore) {
+                    bestScore = score;
+                    playerMove = {i, j};
+                }
+            }
+        }
+    }
+
+    computerMove = move_bestcalculation();
+
+    if (bestPlayerMoveLabel)
+        bestPlayerMoveLabel->setText(QString("Best Move for Player: (%1, %2)").arg(playerMove.first).arg(playerMove.second));
+
+    if (bestComputerMoveLabel)
+        bestComputerMoveLabel->setText(QString("Best Move for Computer: (%1, %2)").arg(computerMove.first).arg(computerMove.second));
 }
 
