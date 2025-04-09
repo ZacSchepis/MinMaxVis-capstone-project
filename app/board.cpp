@@ -18,7 +18,7 @@ Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
     this->map_piece(P2, "");
 
     // Adjust the width only if right panel is shown
-    int extra_width = showRightPanel ? 150 : 0;
+    int extra_width = showRightPanel ? 350 : 0;
     this->setFixedSize((c * this->cell_size) + extra_width, r * this->cell_size);
 
     // Initialize board state and add buttons
@@ -43,7 +43,7 @@ Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
     // Conditionally create and add the right panel
     if (showRightPanel) {
         right_panel = new QWidget(this);
-        right_panel->setFixedWidth(150);
+        right_panel->setFixedWidth(350);
         right_panel->setStyleSheet("background-color: #ddd;");
         right_layout = new QVBoxLayout(right_panel);
         right_panel->setLayout(right_layout);

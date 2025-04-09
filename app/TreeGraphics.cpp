@@ -25,7 +25,7 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
     }
 
     // here we are creating a new TTT Board deppending on the cureent move
-    TicTacToe* board = new TicTacToe();
+    TicTacToe* board = new TicTacToe(nullptr,false);
     board->update_stateofBoard(state);  // here the board state is being applied
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {

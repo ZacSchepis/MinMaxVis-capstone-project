@@ -11,7 +11,7 @@ class TicTacToe : public Board {
     Q_OBJECT
 
 public:
-    explicit TicTacToe(QWidget *parent = nullptr);
+    explicit TicTacToe(QWidget *parent = nullptr,  bool enableRightWidget = true);
     void update_stateofBoard(PieceType** newState);
     PieceType** Retrieve_stateofBoard(); // Returns the current board state
     std::vector<std::pair<int, int>> find_possiblemove(); // Returns possible moves
@@ -31,7 +31,10 @@ private:
     int MinMax(int recursionLevel, bool isMaximizing, int alpha = INT_MIN, int beta = INT_MAX);
     std::pair<int, int> move_bestcalculation();
     QLabel* boardScoreLabel;
+    QLabel* bestPlayerMoveLabel;
+    QLabel* bestComputerMoveLabel;
     int updateBoardScore();
+    void updateBestMoves();
 
 };
 
