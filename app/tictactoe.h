@@ -16,6 +16,7 @@ public:
     PieceType** Retrieve_stateofBoard(); // Returns the current board state
     std::vector<std::pair<int, int>> find_possiblemove(); // Returns possible moves
     PieceType** Visualize_Move(PieceType** state, int r, int c); // Simulates a move for visualization
+    int MinMax(int recursionLevel, bool isMaximizing, int alpha = INT_MIN, int beta = INT_MAX);
 
     signals:
         void move_Executed();  // this will give a signal when a move is made
@@ -28,7 +29,6 @@ private:
     bool Findout_draw();
     void Findout_End(const QString& result);
     void Restart_Game();
-    int MinMax(int recursionLevel, bool isMaximizing, int alpha = INT_MIN, int beta = INT_MAX);
     std::pair<int, int> move_bestcalculation();
     QLabel* boardScoreLabel;
     QLabel* bestPlayerMoveLabel;
