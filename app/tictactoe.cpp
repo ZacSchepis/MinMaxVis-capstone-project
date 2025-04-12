@@ -32,10 +32,8 @@ void TicTacToe::update_stateofBoard(PieceType** next_stateofBoard) {
     }
 }
 
-PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c) {
-    if (!state) {
-        return nullptr;
-    }
+PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c, PieceType player) {
+    if (!state) return nullptr;
 
     PieceType** next_stateofBoard = new PieceType*[3];
     for (int i = 0; i < 3; i++) {
@@ -45,9 +43,10 @@ PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c) {
         }
     }
 
-    next_stateofBoard[r][c] = P1;
+    next_stateofBoard[r][c] = player;
     return next_stateofBoard;
 }
+
 
 TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
     : Board(parent, 3, 3, enableRightWidget) {
@@ -66,6 +65,17 @@ TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
         bestComputerMoveLabel = new QLabel("Best Move for Computer: ", this);
         bestComputerMoveLabel->setStyleSheet("color: black;");
         getRightLayout()->addWidget(bestComputerMoveLabel);
+
+        QPushButton* previewNextMoveButton = new QPushButton("Preview Next Move", this);
+        previewNextMoveButton->setStyleSheet("background-color: black; color: white; font-weight: bold;");
+        getRightLayout()->addWidget(previewNextMoveButton);
+        connect(previewNextMoveButton, &QPushButton::clicked, this, &TicTacToe::PreviewNextMove);
+
+        QPushButton* clearPreviewButton = new QPushButton("Clear Preview", this);
+        clearPreviewButton->setStyleSheet("background-color: black; color: white; font-weight: bold;");
+        getRightLayout()->addWidget(clearPreviewButton);
+        connect(clearPreviewButton, &QPushButton::clicked, this, &TicTacToe::ClearPreview);
+
     }
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -251,4 +261,80 @@ void TicTacToe::updateBestMoves() {
     if (bestComputerMoveLabel)
         bestComputerMoveLabel->setText(QString("Best Move for Computer: (%1, %2)").arg(computerMove.first).arg(computerMove.second));
 }
+
+void TicTacToe::PreviewNextMove() {
+    PieceType** currentState = Retrieve_stateofBoard();
+
+    PieceType** backup = new PieceType*[3];
+    for (int i = 0; i < 3; ++i) {
+        backup[i] = new PieceType[3];
+        for (int j = 0; j < 3; ++j) {
+            backup[i][j] = currentState[i][j];
+        }
+    }
+    previewHistory.push_back(backup);
+
+
+    std::pair<int, int> compMove = move_bestcalculation();
+    if (compMove.first == -1) return;
+
+    PieceType** afterCompMove = Visualize_Move(currentState, compMove.first, compMove.second, P2);
+    if (!afterCompMove) return;
+
+    PieceType** tempBoard = new PieceType*[3];
+    for (int i = 0; i < 3; i++) {
+        tempBoard[i] = new PieceType[3];
+        for (int j = 0; j < 3; j++) {
+            tempBoard[i][j] = afterCompMove[i][j];
+        }
+    }
+
+    std::pair<int, int> playerMove = {-1, -1};
+    int bestScore = INT_MAX;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (tempBoard[i][j] == empty_state) {
+                tempBoard[i][j] = P1;
+                int score = MinMax(0, true);
+                tempBoard[i][j] = empty_state;
+                if (score < bestScore) {
+                    bestScore = score;
+                    playerMove = {i, j};
+                }
+            }
+        }
+    }
+
+    if (playerMove.first != -1)
+        tempBoard[playerMove.first][playerMove.second] = P1;
+
+    update_stateofBoard(tempBoard);
+
+    for (int i = 0; i < 3; ++i) {
+        delete[] tempBoard[i];
+        delete[] afterCompMove[i];
+    }
+    delete[] tempBoard;
+    delete[] afterCompMove;
+}
+
+
+void TicTacToe::ClearPreview() {
+    if (previewHistory.empty()) return;
+
+    PieceType** previous = previewHistory.back();
+    previewHistory.pop_back();
+
+    update_stateofBoard(previous);
+
+    for (int i = 0; i < 3; ++i) {
+        delete[] previous[i];
+    }
+    delete[] previous;
+
+    emit move_Executed();
+    updateBoardScore();
+    updateBestMoves();
+}
+
 

@@ -15,11 +15,13 @@ public:
     void update_stateofBoard(PieceType** newState);
     PieceType** Retrieve_stateofBoard(); // Returns the current board state
     std::vector<std::pair<int, int>> find_possiblemove(); // Returns possible moves
-    PieceType** Visualize_Move(PieceType** state, int r, int c); // Simulates a move for visualization
+    PieceType** Visualize_Move(PieceType** state, int r, int c,PieceType player); // Simulates a move for visualization
     int MinMax(int recursionLevel, bool isMaximizing, int alpha = INT_MIN, int beta = INT_MAX);
+    void PreviewNextMove();
+
 
     signals:
-        void move_Executed();  // this will give a signal when a move is made
+        void move_Executed();
     void update_tree_Visualization();
 
 private:
@@ -35,6 +37,10 @@ private:
     QLabel* bestComputerMoveLabel;
     int updateBoardScore();
     void updateBestMoves();
+    std::vector<PieceType**> previewHistory;
+    void ClearPreview();
+
+
 
 };
 
