@@ -1,4 +1,5 @@
 #include "TreeGraphics.h"
+#include "GeminiClient.h"
 #include <QGraphicsProxyWidget>
 #include <QPen>
 
@@ -81,7 +82,46 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
             QGraphicsRectItem* border = scene->addRect(borderRect, QPen(Qt::green, 4));
             border->setPos(proxy->pos());
             border->setZValue(proxy->zValue() - 1);
+
+            // ℹ️ INFO BUTTON
+            QPushButton* infoButton = new QPushButton("ℹ️");
+            infoButton->setStyleSheet("background-color: transparent; font-weight: bold;");
+            QGraphicsProxyWidget* infoProxy = scene->addWidget(infoButton);
+            infoProxy->setPos(proxy->pos().x() + borderRect.width() - 10, proxy->pos().y() - 10);
+            infoProxy->setZValue(proxy->zValue() + 1);
+
+            // Gemini API integration
+            connect(infoButton, &QPushButton::clicked, [=]() {
+                GeminiClient* gemini = new GeminiClient(proxy->widget()); // or pass `this` if preferred
+
+                // Build board string for the prompt
+                QString boardString;
+                for (int i = 0; i < 3; ++i) {
+                    for (int j = 0; j < 3; ++j) {
+                        switch (state[i][j]) {
+                            case P1: boardString += "X "; break;
+                            case P2: boardString += "O "; break;
+                            default: boardString += ". ";
+                        }
+                    }
+                    boardString += "\n";
+                }
+
+                QString prompt = QString(
+                    "Here is a Tic-Tac-Toe board state:\n%1\n"
+                    "It is X's turn (the human player). The best move is at row %2, column %3.\n"
+                    "Why is this the best move?"
+                ).arg(boardString).arg(bestMove.first).arg(bestMove.second);
+                connect(gemini, &GeminiClient::responseReady, [=](const QString &response){
+                    QMessageBox::information(nullptr, "Gemini Explanation", response);
+                    gemini->deleteLater();
+                });
+
+                gemini->askGemini(prompt);
+            });
         }
+
+
 
     }
 
