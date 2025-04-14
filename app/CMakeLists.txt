@@ -19,8 +19,6 @@ set(PROJECT_SOURCES
         mainwindow.ui
         TreeGraphics.h
         TreeGraphics.cpp
-        GeminiClient.h
-        GeminiClient.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

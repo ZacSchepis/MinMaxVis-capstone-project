@@ -1,5 +1,4 @@
 #include "TreeGraphics.h"
-#include "GeminiClient.h"
 #include <QGraphicsProxyWidget>
 #include <QPen>
 
@@ -83,47 +82,26 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
             border->setPos(proxy->pos());
             border->setZValue(proxy->zValue() - 1);
 
-            // ℹ️ INFO BUTTON
+            // INFO ICON
             QPushButton* infoButton = new QPushButton("ℹ️");
             infoButton->setStyleSheet("background-color: transparent; font-weight: bold;");
+
             QGraphicsProxyWidget* infoProxy = scene->addWidget(infoButton);
             infoProxy->setPos(proxy->pos().x() + borderRect.width() - 10, proxy->pos().y() - 10);
             infoProxy->setZValue(proxy->zValue() + 1);
 
-            // Gemini API integration
             connect(infoButton, &QPushButton::clicked, [=]() {
-                GeminiClient* gemini = new GeminiClient(proxy->widget()); // or pass `this` if preferred
-
-                // Build board string for the prompt
-                QString boardString;
-                for (int i = 0; i < 3; ++i) {
-                    for (int j = 0; j < 3; ++j) {
-                        switch (state[i][j]) {
-                            case P1: boardString += "X "; break;
-                            case P2: boardString += "O "; break;
-                            default: boardString += ". ";
-                        }
-                    }
-                    boardString += "\n";
-                }
-
-                QString prompt = QString(
-                    "Here is a Tic-Tac-Toe board state:\n%1\n"
-                    "It is X's turn (the human player). The best move is at row %2, column %3.\n"
-                    "Why is this the best move?"
-                ).arg(boardString).arg(bestMove.first).arg(bestMove.second);
-                connect(gemini, &GeminiClient::responseReady, [=](const QString &response){
-                    QMessageBox::information(nullptr, "Gemini Explanation", response);
-                    gemini->deleteLater();
-                });
-
-                gemini->askGemini(prompt);
+                QString details = QString("Best Move: (%1, %2)\nBoard Score: %3")
+                                  .arg(bestMove.first)
+                                  .arg(bestMove.second)
+                                  .arg(gameInstance->MinMax(0, true));
+                QMessageBox::information(nullptr, "Move Info", details);
             });
         }
 
-
-
     }
+
+
 
     std::vector<std::pair<int, int>> possibleMoves = gameInstance->find_possiblemove();
     for (size_t i = 0; i < possibleMoves.size(); i++) {
