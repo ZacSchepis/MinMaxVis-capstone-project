@@ -81,9 +81,27 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
             QGraphicsRectItem* border = scene->addRect(borderRect, QPen(Qt::green, 4));
             border->setPos(proxy->pos());
             border->setZValue(proxy->zValue() - 1);
+
+            // INFO ICON
+            QPushButton* infoButton = new QPushButton("ℹ️");
+            infoButton->setStyleSheet("background-color: transparent; font-weight: bold;");
+
+            QGraphicsProxyWidget* infoProxy = scene->addWidget(infoButton);
+            infoProxy->setPos(proxy->pos().x() + borderRect.width() - 10, proxy->pos().y() - 10);
+            infoProxy->setZValue(proxy->zValue() + 1);
+
+            connect(infoButton, &QPushButton::clicked, [=]() {
+                QString details = QString("Best Move: (%1, %2)\nBoard Score: %3")
+                                  .arg(bestMove.first)
+                                  .arg(bestMove.second)
+                                  .arg(gameInstance->MinMax(0, true));
+                QMessageBox::information(nullptr, "Move Info", details);
+            });
         }
 
     }
+
+
 
     std::vector<std::pair<int, int>> possibleMoves = gameInstance->find_possiblemove();
     for (size_t i = 0; i < possibleMoves.size(); i++) {
