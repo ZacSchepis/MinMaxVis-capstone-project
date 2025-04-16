@@ -63,9 +63,7 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
     proxy->setPos(x, y);
 
 
-    if (level == 2 && bestMove != std::pair<int, int>{-1, -1}) {
-    } else if (level == 1 && currentMove == bestMove) {
-        QRectF widgetRect = proxy->widget()->geometry();
+    if (bestMove != std::pair<int, int>{-1, -1} && (level == 1 || level == 2)) {
         QRectF borderRect(0, 0, widgetRect.width() * proxy->scale(), widgetRect.height() * proxy->scale());
 
         QGraphicsRectItem* border = scene->addRect(borderRect, QPen(Qt::red, 4));
