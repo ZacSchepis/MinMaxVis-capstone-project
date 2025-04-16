@@ -40,7 +40,7 @@ void TreeGraphics::update_Tree() {
     Tree_withBoards(600, 50, 3, 0, gameInstance->Retrieve_stateofBoard(), bestMove);
 }
 
-void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType** state, std::pair<int, int> bestMove) {
+void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType** state, std::pair<int, int> bestMove, std::pair<int, int> currentMove) {
     if (depth == 0 || state == nullptr) return;
 
     TicTacToe* board = new TicTacToe(nullptr, false);
@@ -63,18 +63,33 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
     proxy->setPos(x, y);
 
 
-    if (level == 1 && bestMove != std::pair<int, int>{-1, -1}) {
-        bool isBest = false;
-        for (int i = 0; i < 3 && !isBest; ++i) {
-            for (int j = 0; j < 3 && !isBest; ++j) {
-                if (state[i][j] == P1 &&
-                    std::make_pair(i, j) == bestMove) {
-                    isBest = true;
-                    }
-            }
-        }
+    if (level == 2 && bestMove != std::pair<int, int>{-1, -1}) {
+    } else if (level == 1 && currentMove == bestMove) {
+        QRectF widgetRect = proxy->widget()->geometry();
+        QRectF borderRect(0, 0, widgetRect.width() * proxy->scale(), widgetRect.height() * proxy->scale());
 
-        if (isBest) {
+        QGraphicsRectItem* border = scene->addRect(borderRect, QPen(Qt::red, 4));
+        border->setPos(proxy->pos());
+        border->setZValue(proxy->zValue() - 1);
+
+        // INFO ICON
+        QPushButton* infoButton = new QPushButton("ℹ️");
+        infoButton->setStyleSheet("background-color: transparent; font-weight: bold;");
+
+        QGraphicsProxyWidget* infoProxy = scene->addWidget(infoButton);
+        infoProxy->setPos(proxy->pos().x() + borderRect.width() - 10, proxy->pos().y() - 10);
+        infoProxy->setZValue(proxy->zValue() + 1);
+
+        connect(infoButton, &QPushButton::clicked, [=]() {
+            QString details = QString("Best Computer Move: (%1, %2)\nBoard Score: %3")
+                              .arg(bestMove.first)
+                              .arg(bestMove.second)
+                              .arg(gameInstance->MinMax(0, true));
+            QMessageBox::information(nullptr, "Move Info", details);
+        });
+    }
+
+        if (level == 2 && currentMove == bestMove) {
             QRectF widgetRect = proxy->widget()->geometry();
             QRectF borderRect(0, 0, widgetRect.width() * proxy->scale(), widgetRect.height() * proxy->scale());
 
@@ -99,16 +114,20 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
             });
         }
 
-    }
+
 
 
 
     std::vector<std::pair<int, int>> possibleMoves = gameInstance->find_possiblemove();
     for (size_t i = 0; i < possibleMoves.size(); i++) {
-        int childX = x + (i - possibleMoves.size() / 2) * 100;
-        PieceType** newState = gameInstance->Visualize_Move(state, possibleMoves[i].first, possibleMoves[i].second, P1);
+        int childX = x + (i - static_cast<int>(possibleMoves.size()) / 2) * 100;
+        PieceType currentPlayer = (level % 2 == 0) ? P2 : P1;  // Even = Computer (P2), Odd = Player (P1)
+
+        PieceType** newState = gameInstance->Visualize_Move(
+            state, possibleMoves[i].first, possibleMoves[i].second, currentPlayer);
+
         if (newState) {
-            Tree_withBoards(childX, y + 120, depth - 1, level + 1, newState, bestMove);
+            Tree_withBoards(childX, y + 120, depth - 1, level + 1, newState, bestMove, possibleMoves[i]);
         }
     }
 }
