@@ -63,7 +63,9 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
     proxy->setPos(x, y);
 
 
-    if (bestMove != std::pair<int, int>{-1, -1} && (level == 1 || level == 2)) {
+    if (level == 2 && bestMove != std::pair<int, int>{-1, -1}) {
+    } else if (level == 1 && currentMove == bestMove) {
+        QRectF widgetRect = proxy->widget()->geometry();
         QRectF borderRect(0, 0, widgetRect.width() * proxy->scale(), widgetRect.height() * proxy->scale());
 
         QGraphicsRectItem* border = scene->addRect(borderRect, QPen(Qt::red, 4));
@@ -120,6 +122,11 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level, PieceType
     for (size_t i = 0; i < possibleMoves.size(); i++) {
         int childX = x + (i - static_cast<int>(possibleMoves.size()) / 2) * 100;
         PieceType currentPlayer = (level % 2 == 0) ? P2 : P1;  // Even = Computer (P2), Odd = Player (P1)
+
+
+
+
+
 
         PieceType** newState = gameInstance->Visualize_Move(
             state, possibleMoves[i].first, possibleMoves[i].second, currentPlayer);
