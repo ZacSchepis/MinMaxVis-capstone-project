@@ -102,6 +102,7 @@ void TicTacToe::Player_move(int row, int column) {
         place(row, column, P1);
         currentTurn = P2;
         emit move_Executed();
+        emit update_tree_Visualization();
         updateBoardScore();
         updateBestMoves();
 
@@ -120,6 +121,11 @@ void TicTacToe::Player_move(int row, int column) {
 }
 
 void TicTacToe::Computer_move() {
+    if (currentTurn != P2) {
+        QMessageBox::information(this, "Wait", "It's not the computer's turn.");
+        return;
+    }
+
     std::pair<int, int> IdealMove = move_bestcalculation();
     if (IdealMove.first != -1) {
         place(IdealMove.first, IdealMove.second, P2);
@@ -133,10 +139,11 @@ void TicTacToe::Computer_move() {
             Findout_End("It's a draw.");
         } else {
             currentTurn = P1;
+            emit update_tree_Visualization();
         }
     }
-
 }
+
 
 bool TicTacToe::Findout_Win(PieceType player) {
     for (int i = 0; i < 3; i++) {
