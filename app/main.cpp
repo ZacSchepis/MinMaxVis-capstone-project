@@ -27,11 +27,8 @@ int main(int argc, char *argv[]) {
 //    treeWidget.show();
     Checkers board_game;
     board_game.populate_board(true);
-//    board_game.turns(20);
-//    board_game.turns(200);
     window.setCentralWidget(&board_game);
     window.show();
-//    board_game.find_best_move();
 
     return app.exec();
 }

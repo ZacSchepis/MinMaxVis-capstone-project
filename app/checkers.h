@@ -1,62 +1,45 @@
-#ifndef CHECKERS_H
-#define CHECKERS_H
+//
+// Created by XxGam on 4/16/2025.
+//
+
+#ifndef APP_CHECKERS2_H
+#define APP_CHECKERS2_H
 #include <vector>
 #include "board.h"
-struct PiecePos {
-    int row;
-    int col;
-    PieceType piece;
-    bool is_king = false;
-    bool directionUp = false;
-};
+#include "minimal_checker.h"
 
-class Checkers : public Board
-{
-
+class Checkers : public Board {
 private:
     int populate_row(int r, PieceType p);
-    std::array<int, 2> piece_counter;
-    bool p1_turn;
-    bool can_take();
-    std::vector<PiecePos> piece_stack;
-//    PiecePos piece_stack[24];
-//    int stack_top;
-//    void unpop();
     int evaluate_board();
-//    PiecePos pop_piece();
-//    void update_piece_counter
     bool is_terminal_node();
-    bool left_right_check(PiecePos p);
+    PiecePos* pieceToClick;
+    PiecePos* pieceFromClick;
     bool no_legal_moves(PieceType p);
-    void remove_place(PiecePos p, PieceType replace_with);
-    std::vector<PiecePos> generate_moves(PiecePos start);
-    PiecePos pieceToClick;
-    PiecePos pieceFromClick;
     void setClickedPiece(int r, int c);
-    void toggle_space_connection(bool status);
+    std::array<int, 2> piece_counter;
+    int add_place(int r, int c, PieceType p);
+    std::list<PiecePos*> pieces;
+//    std::pair<int, PiecePos*> pvs(PiecePos *node, int depth, int alpha, int beta, PieceType colour, std::list<MoveDecision*>* moves);
+    int colour_scale(PieceType c);
+    std::list<std::pair<PiecePos*, PiecePos*>>* generate_moves(PiecePos *p);
+    std::array<PieceType, 3> opposing;
+    PieceType maybe_add(std::list<std::pair<PiecePos*, PiecePos*>> *l, int r, int c, int rOffset, int cOffset, PiecePos *p);
+//    void find_best_move(PieceType pt);
+    MoveBackup apply_move(PiecePos* node, PiecePos* move, PiecePos* captured);
+    void undo_move(PiecePos* node, PiecePos* move, const MoveBackup& backup);
+    std::list<PiecePos*>* clone_pieces();
+    void clone_pieces(std::list<PiecePos*>* source);
+    PiecePos* pseudo_piece_position(int r, int c, std::list<PiecePos*> *ps);
 public:
     explicit Checkers(QWidget *parent=nullptr);
+    PiecePos* get_piece_position(int r, int c);
+    PieceType next_colour(PieceType p);
+    void print_peices();
+    void turns(int t, PieceType pt);
     int populate_board(bool pVsAi);
-    PiecePos get_piece_at_pos(int row, int col);
-    bool is_p1turn();
-    void add_place(int row, int col, PieceType p, PiecePos config);
-    bool can_place_at(int row, int col);
-    int check_move(PieceType p, int row, int col);
-    bool validate_move(PiecePos from, PiecePos to);
-    bool make_move(PiecePos from, PiecePos to);
-    void turns(int t);
-//    PiecePos can_capture(PiecePos from, PiecePos to, bool intermediate, int row_offset, int col_offset);
-    PiecePos* king_me(PiecePos p);
-    bool can_capture(PiecePos from, PiecePos to, int row_offset, int col_offset);
-    void moving_unset(PiecePos p_old, PiecePos p_new);
-    std::pair<int, PiecePos> pvs(PiecePos node, int depth, int alpha, int beta, int colour);
-    void find_best_move();
-    std::vector<PiecePos>::iterator find_piece(int r, int c);
-    PieceType wipe_space(PiecePos p);
-
-
-//private slots:
-//    void handleButton() override;
+    void toggle_space_connection(bool status);
+    MoveDecision* BestMove(PieceType pt);
+    int MinMax(int recursionLevel, bool isMaximizing, PieceType pt, minimal_checker c);
 };
-
-#endif // CHECKERS_H
+#endif //APP_CHECKERS2_H

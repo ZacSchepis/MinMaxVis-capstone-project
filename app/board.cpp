@@ -30,6 +30,13 @@ Board::Board(QWidget *parent, int r, int c)
     setLayout(grid);
 
 }
+void Board::set_square(int r, int c, const char *colour) {
+    QLayoutItem *item = grid->itemAtPosition(r, c);
+    if(!item) return;
+    QWidget *widget = item->widget();
+    QPushButton *button = qobject_cast<QPushButton*>(widget);
+    button->setStyleSheet(QString("background-color: %1;").arg(colour));
+}
 int Board::map_piece(PieceType p_type, QString resource_name) {
     if(this->piece_maps.count(p_type) == 0) {
         this->piece_maps[p_type] = resource_name;

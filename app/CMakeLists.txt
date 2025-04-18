@@ -19,6 +19,8 @@ set(PROJECT_SOURCES
         mainwindow.ui
         TreeGraphics.h
         TreeGraphics.cpp
+        minimal_checker.cpp
+        minimal_checker.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -68,6 +68,7 @@ public:
     void update_cell(int row, int col);
     ~Board();
 
+    void set_square(int r, int c, const char *colour);
 
     void set_styles(QString const &styles);
     int get_size(int level);
