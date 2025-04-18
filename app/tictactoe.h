@@ -18,7 +18,7 @@ public:
     PieceType** Visualize_Move(PieceType** state, int r, int c,PieceType player); // Simulates a move for visualization
     int MinMax(int recursionLevel, bool isMaximizing, int alpha = INT_MIN, int beta = INT_MAX);
     void PreviewNextMove();
-
+    PieceType currentTurn = P1;
 
     signals:
         void move_Executed();
@@ -39,6 +39,8 @@ private:
     void updateBestMoves();
     std::vector<PieceType**> previewHistory;
     void ClearPreview();
+
+
 
 
 
