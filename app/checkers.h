@@ -1,5 +1,5 @@
 //
-// Created by XxGam on 4/16/2025.
+// Created by ZacSchepis on 4/16/2025.
 //
 
 #ifndef APP_CHECKERS2_H
@@ -10,36 +10,75 @@
 
 class Checkers : public Board {
 private:
-    int populate_row(int r, PieceType p);
-    int evaluate_board();
-    bool is_terminal_node();
+    minimal_checker guts;
     PiecePos* pieceToClick;
     PiecePos* pieceFromClick;
-    bool no_legal_moves(PieceType p);
-    void setClickedPiece(int r, int c);
     std::array<int, 2> piece_counter;
-    int add_place(int r, int c, PieceType p);
-    std::list<PiecePos*> pieces;
-//    std::pair<int, PiecePos*> pvs(PiecePos *node, int depth, int alpha, int beta, PieceType colour, std::list<MoveDecision*>* moves);
-    int colour_scale(PieceType c);
-    std::list<std::pair<PiecePos*, PiecePos*>>* generate_moves(PiecePos *p);
     std::array<PieceType, 3> opposing;
-    PieceType maybe_add(std::list<std::pair<PiecePos*, PiecePos*>> *l, int r, int c, int rOffset, int cOffset, PiecePos *p);
-//    void find_best_move(PieceType pt);
-    MoveBackup apply_move(PiecePos* node, PiecePos* move, PiecePos* captured);
-    void undo_move(PiecePos* node, PiecePos* move, const MoveBackup& backup);
-    std::list<PiecePos*>* clone_pieces();
-    void clone_pieces(std::list<PiecePos*>* source);
-    PiecePos* pseudo_piece_position(int r, int c, std::list<PiecePos*> *ps);
+    std::list<PiecePos*> pieces;
+    /**
+     * @brief Checkers::setClickedPiece Schepis-4/17
+     * Conditionally sets and applies pieces clicked by the user
+     * @param r - row index clicked
+     * @param c - column index clicked
+     */
+    void setClickedPiece(int r, int c);
+    int add_place(int r, int c, PieceType p);
+    /**
+     * @brief Checkers::colour_scale Schepis-4/17
+     * Scales a piece type to be 1 or -1
+     * @param c - piece type to colour
+     * @return
+     */
+    static int colour_scale(PieceType c);
 public:
     explicit Checkers(QWidget *parent=nullptr);
-    PiecePos* get_piece_position(int r, int c);
+    /**
+     * @brief Checkers::next_colour Schepis-4/17
+     * Helper function to cycle through piece types without
+     * manually switching
+     * @param p - piece type to get the next colour of
+     * @return
+     */
     PieceType next_colour(PieceType p);
     void print_peices();
+
+    /**
+     * @brief Checkers::turns Schepis-4/17
+     * Runs t turns of AI vs AI checkers
+     * @param t - number of turns to do
+     * @param pt - piece colour to start on
+     */
     void turns(int t, PieceType pt);
+    /**
+     * @brief Checkers::populate_board Schepis-4/17
+     * Populates Checker board with pieces
+     * @param pVsAi - True : take player input, False : player input isn't taken
+     * @return
+     */
     int populate_board(bool pVsAi);
+    /**
+     * @brief Checkers::toggle_space_connection Schepis-4/17
+     * [En/Dis]ables space connections
+     * @param status
+     */
     void toggle_space_connection(bool status);
+    /**
+     * @brief Checkers::BestMove Schepis-4/17
+     * Find the best move for the provided piece
+     * @param pt - piece type to find the best for
+     * @return
+     */
     MoveDecision* BestMove(PieceType pt);
+    /**
+     * @brief Checkers::MinMax Schepis-4/17
+     * MinMax implementation for Checkers
+     * @param recursionLevel - current search depth
+     * @param isMaximizing - path if the current player is maximizing
+     * @param pt - piece/colour type to look for
+     * @param c - Internal data structure to use
+     * @return
+     */
     int MinMax(int recursionLevel, bool isMaximizing, PieceType pt, minimal_checker c);
 };
 #endif //APP_CHECKERS2_H

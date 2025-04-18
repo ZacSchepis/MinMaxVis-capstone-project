@@ -19,11 +19,17 @@ private:
     PieceType** board_state;
     int cell_size;
     std::map<PieceType, QString> piece_maps;
+
 //private slots:
 //    void handleButton(int row, int col);
 public:
+    QVBoxLayout* getRightLayout();
+    void update_stateofBoard(PieceType** newState);
     QGridLayout *grid;
-    explicit Board(QWidget *parent = nullptr, int r = 3, int c = 3);
+    PieceType** Retrieve_stateofBoard() const;
+    explicit Board(QWidget *parent = nullptr, int r = 3, int c = 3,bool showRightPanel = false);
+    void toggleRightPanel(bool show);
+
 
     /**
      * @brief Board::get_piece_at Schepis-2/7/25
@@ -74,6 +80,8 @@ public:
     int get_size(int level);
 protected:
     void paintEvent(QPaintEvent* event) override;
+    QWidget* right_panel = nullptr;
+    QVBoxLayout* right_layout = nullptr;
 
 signals:
 };

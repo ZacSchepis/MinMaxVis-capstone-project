@@ -21,14 +21,26 @@ int main(int argc, char *argv[]) {
 #endif
     QApplication app(argc, argv);
     MainWindow window;
-//    window.setWindowTitle("MinMax Visualizers");
-//    TicTacToe board_game(&window);
-//    TreeGraphics treeWidget;
-//    treeWidget.show();
-    Checkers board_game;
-    board_game.populate_board(true);
+    window.setWindowTitle("MinMax Visualizers");
+
+    /*Tic Tac Toe Game Code*/
+    TicTacToe board_game(&window);
+    TreeGraphics treeWidget(nullptr, &board_game);
+    QObject::connect(&board_game, &TicTacToe::update_tree_Visualization, &treeWidget, &TreeGraphics::update_Tree);
+    QObject::connect(&board_game, &TicTacToe::move_Executed, &treeWidget, &TreeGraphics::update_Tree);
+    treeWidget.show();
+    // /*----------------------------------*/
+
+    /*Checkers Game Run*/
+//     Checkers board_game;
+//     board_game.populate_board(true);
+//    board_game.turns(20, P1);
+    /*------------------------------------*/
+
+    //    board_game.turns(200);
     window.setCentralWidget(&board_game);
     window.show();
+    //    board_game.find_best_move();
 
     return app.exec();
 }

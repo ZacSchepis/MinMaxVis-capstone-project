@@ -2,34 +2,57 @@
 #include <QPushButton.h>
 #include <QIcon.h>
 #include <QCoreApplication.h>
-Board::Board(QWidget *parent, int r, int c)
-    : QWidget{parent}, rows(r), cols(c), cell_size(50)
+#include <QLabel>
+Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
+    : QWidget{parent}, rows(r), cols(c), cell_size(50), right_panel(nullptr), right_layout(nullptr)
 {
-    grid = new QGridLayout(this);
-    // Initializing piece_maps to default values
+    QHBoxLayout *outer_layout = new QHBoxLayout(this);
+
+    // Create the game board grid
+    grid = new QGridLayout();
+    grid->setSpacing(0);
+
     this->map_piece(error_state, "");
     this->map_piece(empty_state, "");
     this->map_piece(P1, "");
     this->map_piece(P2, "");
-    this->setFixedSize(c*this->cell_size, r*this->cell_size);
+
+    // Adjust the width only if right panel is shown
+    int extra_width = showRightPanel ? 350 : 0;
+    this->setFixedSize((c * this->cell_size) + extra_width, r * this->cell_size);
+
+    // Initialize board state and add buttons
     board_state = new PieceType*[rows];
-    for(int i=0; i<r; i++){
+    for (int i = 0; i < r; i++) {
         board_state[i] = new PieceType[cols];
-        for(int j=0; j<c; j++){
+        for (int j = 0; j < c; j++) {
             board_state[i][j] = empty_state;
             QPushButton *button = new QPushButton(this);
-            button->setFixedSize(48,48);
+            button->setFixedSize(48, 48);
             bool is_black = (i + j) % 2 == 1;
-
-            button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black":"white"));
-//            c_++;
+            button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black" : "white"));
             grid->addWidget(button, i, j);
         }
     }
-//    this->set_styles("background-color: white; border:2px solid black;");
-    setLayout(grid);
 
+    // Wrap the grid in a QWidget
+    QWidget *board_widget = new QWidget(this);
+    board_widget->setLayout(grid);
+    outer_layout->addWidget(board_widget);
+
+    // Conditionally create and add the right panel
+    if (showRightPanel) {
+        right_panel = new QWidget(this);
+        right_panel->setFixedWidth(350);
+        right_panel->setStyleSheet("background-color: #ddd;");
+        right_layout = new QVBoxLayout(right_panel);
+        right_panel->setLayout(right_layout);
+        outer_layout->addWidget(right_panel);
+    }
+
+    setLayout(outer_layout);
 }
+
 void Board::set_square(int r, int c, const char *colour) {
     QLayoutItem *item = grid->itemAtPosition(r, c);
     if(!item) return;
@@ -37,6 +60,9 @@ void Board::set_square(int r, int c, const char *colour) {
     QPushButton *button = qobject_cast<QPushButton*>(widget);
     button->setStyleSheet(QString("background-color: %1;").arg(colour));
 }
+
+
+
 int Board::map_piece(PieceType p_type, QString resource_name) {
     if(this->piece_maps.count(p_type) == 0) {
         this->piece_maps[p_type] = resource_name;
@@ -59,6 +85,35 @@ void Board::update_cell(int row, int col){
     }
 }
 
+void Board::update_stateofBoard(PieceType** newState) {
+    if (!newState) {
+        qDebug() << "ERROR: Attempted to setBoardState with a nullptr!";
+        return;
+    }
+
+    qDebug() << "Setting board state...";
+
+    // Free old board state memory
+    if (board_state) {
+        for (int i = 0; i < rows; i++) {
+            if (board_state[i]) {
+                delete[] board_state[i];
+            }
+        }
+        delete[] board_state;
+    }
+
+    // Allocate new board state
+    board_state = new PieceType*[rows];
+    for (int i = 0; i < rows; i++) {
+        board_state[i] = new PieceType[cols];
+        for (int j = 0; j < cols; j++) {
+            board_state[i][j] = newState[i][j];  // Copy new state
+        }
+    }
+}
+
+
 
 int Board::place(int r, int c, PieceType piece){
     if((r >= rows || r < 0) || (c >= cols || c < 0)) return -1;
@@ -70,6 +125,10 @@ int Board::place(int r, int c, PieceType piece){
 PieceType Board::get_piece_at(int row, int col) {
     if((row >= this->rows || row < 0) || (col >= this->cols || col <0)) return error_state;
     return this->board_state[row][col];
+}
+
+PieceType** Board::Retrieve_stateofBoard() const {
+    return board_state;
 }
 
 int Board::get_cell_size() {return this->cell_size;}
@@ -91,6 +150,7 @@ void Board::set_styles(QString const &styles) {
 int Board::get_size(int level) {
     return level == 1 ? this->rows : this->cols*this->cols;
 }
-//void Board::handleButton(int row, int col) {
-//
-//}
+
+QVBoxLayout* Board::getRightLayout() {
+    return right_layout;
+}

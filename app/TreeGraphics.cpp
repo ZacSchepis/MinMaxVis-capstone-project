@@ -1,54 +1,118 @@
 #include "TreeGraphics.h"
 #include <QGraphicsProxyWidget>
 #include <QPen>
-#include "TicTacToe.h"
 
-TreeGraphics::TreeGraphics(QWidget* parent) : QWidget(parent) {
+TreeGraphics::TreeGraphics(QWidget* parent, TicTacToe* game) : QWidget(parent), gameInstance(game) {
     scene = new QGraphicsScene(this);
     view = new QGraphicsView(scene, this);
+    view->setGeometry(10, 10, 1200, 800); // Adjust size to fit expanding tree
 
-    view->setGeometry(10, 10, 800, 600);
+    if (gameInstance) {
+        connect(gameInstance, &TicTacToe::move_Executed, this, &TreeGraphics::update_Tree);
+    }
 
-    int startX = 400;
-    int startY = 50;
-    int treeDepth = 3;
-
-    drawTreeWithBoards(startX, startY, treeDepth, 0);
+    update_Tree();
 }
 
-void TreeGraphics::drawTreeWithBoards(int x, int y, int depth, int level) {
-    if (depth == 0)
-        return;
+void TreeGraphics::update_Tree() {
+    scene->clear();
 
-    const double scaleFactor = 0.5;
-    const int verticalSpacing = 120;
-    const int horizontalSpacing = 100 * depth;
+    std::pair<int, int> bestMove = {-1, -1};
 
-    TicTacToe* board = new TicTacToe();
-    QGraphicsProxyWidget* proxy = scene->addWidget(board);
-    proxy->setScale(scaleFactor);
-    proxy->setPos(x, y);
+    if (gameInstance) {
+        PieceType currentPlayer = gameInstance->currentTurn;
+        int bestScore = (currentPlayer == P2) ? INT_MIN : INT_MAX;
 
-    QRectF boardRect = proxy->boundingRect();
-    int boardWidth  = boardRect.width() * scaleFactor;
-    int boardHeight = boardRect.height() * scaleFactor;
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                if (gameInstance->get_piece_at(i, j) == empty_state) {
+                    gameInstance->place(i, j, currentPlayer);
+                    int score = gameInstance->MinMax(0, currentPlayer == P2);
+                    gameInstance->place(i, j, empty_state);
 
-    int parentBottomCenterX = x + boardWidth / 2;
-    int parentBottomCenterY = y + boardHeight;
+                    if ((currentPlayer == P2 && score > bestScore) ||
+                        (currentPlayer == P1 && score < bestScore)) {
+                        bestScore = score;
+                        bestMove = {i, j};
+                        }
+                }
+            }
+        }
 
-    int childY = y + verticalSpacing;
-
-    for (int i = 0; i < 2; i++) {
-        int childX = (i == 0) ? x - horizontalSpacing : x + horizontalSpacing;
-
-        int childTopCenterX = childX + boardWidth / 2;
-        int childTopCenterY = childY;
-
-        scene->addLine(parentBottomCenterX, parentBottomCenterY,
-                       childTopCenterX, childTopCenterY,
-                       QPen(Qt::black));
-
-        drawTreeWithBoards(childX, childY, depth - 1, level + 1);
+        Tree_withBoards(600, 50, 3, 0, gameInstance->Retrieve_stateofBoard(), bestMove, {-1, -1}, currentPlayer);
     }
 }
 
+
+
+
+void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level,
+                                   PieceType** state, std::pair<int, int> bestMove,
+                                   std::pair<int, int> currentMove, PieceType currentPlayer) {
+    if (depth == 0 || state == nullptr) return;
+
+    // Create disabled board widget
+    TicTacToe* board = new TicTacToe(nullptr, false);
+    board->update_stateofBoard(state);
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            QLayoutItem *item = board->grid->itemAtPosition(i, j);
+            if (item) {
+                QWidget *widget = item->widget();
+                if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
+                    button->setDisabled(true);
+                }
+            }
+        }
+    }
+
+    QGraphicsProxyWidget* proxy = scene->addWidget(board);
+    proxy->setScale(0.5);
+    proxy->setPos(x, y);
+
+    // Highlight best move at level 1
+    if (level == 1 && currentMove == bestMove) {
+        QRectF widgetRect = proxy->widget()->geometry();
+        QRectF borderRect(0, 0, widgetRect.width() * proxy->scale(), widgetRect.height() * proxy->scale());
+
+        QPen highlightPen = (currentPlayer == P1) ? QPen(Qt::red, 4) : QPen(Qt::green, 4);
+        QString playerLabel = (currentPlayer == P1) ? "Player" : "Computer";
+
+        QGraphicsRectItem* border = scene->addRect(borderRect, highlightPen);
+        border->setPos(proxy->pos());
+        border->setZValue(proxy->zValue() - 1);
+
+        QPushButton* infoButton = new QPushButton("ℹ️");
+        infoButton->setStyleSheet("background-color: transparent; font-weight: bold;");
+
+        QGraphicsProxyWidget* infoProxy = scene->addWidget(infoButton);
+        infoProxy->setPos(proxy->pos().x() + borderRect.width() - 10, proxy->pos().y() - 10);
+        infoProxy->setZValue(proxy->zValue() + 1);
+
+        connect(infoButton, &QPushButton::clicked, [=]() {
+            QString details = QString("Best %1 Move: (%2, %3)\nBoard Score: %4")
+                              .arg(playerLabel)
+                              .arg(bestMove.first)
+                              .arg(bestMove.second)
+                              .arg(gameInstance->MinMax(0, currentPlayer == P2));
+            QMessageBox::information(nullptr, "Move Info", details);
+        });
+    }
+
+    // Recurse to children
+    std::vector<std::pair<int, int>> possibleMoves = gameInstance->find_possiblemove();
+    PieceType nextPlayer = (currentPlayer == P1) ? P2 : P1;
+
+    for (size_t i = 0; i < possibleMoves.size(); i++) {
+        int childX = x + (i - static_cast<int>(possibleMoves.size()) / 2) * 100;
+
+        PieceType** newState = gameInstance->Visualize_Move(
+            state, possibleMoves[i].first, possibleMoves[i].second, currentPlayer);
+
+        if (newState) {
+            Tree_withBoards(childX, y + 120, depth - 1, level + 1,
+                            newState, bestMove, possibleMoves[i], nextPlayer);
+        }
+    }
+}

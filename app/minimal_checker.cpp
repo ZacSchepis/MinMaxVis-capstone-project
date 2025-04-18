@@ -132,3 +132,10 @@ int minimal_checker::evaluate_board() {
     if(no_legal_moves(P2) || piece_counter[P2-1] == 0) return INT_MAX;
     return score;
 }
+
+void minimal_checker::clone_pieces(std::list<PiecePos*>* source) {
+    for(const auto& p : pieces) {
+        auto *clone = new PiecePos{p->row, p->col, p->piece, p->is_king};
+        source->push_back(clone);
+    }
+}
