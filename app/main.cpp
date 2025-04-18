@@ -13,6 +13,7 @@
 #include "tictactoe.h"
 
 int main(int argc, char *argv[]) {
+
 #ifdef _WIN32
     if (AttachConsole(ATTACH_PARENT_PROCESS)) {
         freopen("CONOUT$", "w", stdout);
