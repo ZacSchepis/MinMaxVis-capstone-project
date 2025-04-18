@@ -39,6 +39,8 @@ private:
     void updateBestMoves();
     std::vector<PieceType**> previewHistory;
     void ClearPreview();
+    PieceType currentTurn = P1;
+
 
 
 

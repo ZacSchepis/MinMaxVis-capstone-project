@@ -76,6 +76,12 @@ TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
         getRightLayout()->addWidget(clearPreviewButton);
         connect(clearPreviewButton, &QPushButton::clicked, this, &TicTacToe::ClearPreview);
 
+        QPushButton* computerMoveButton = new QPushButton("Computer Move", this);
+        computerMoveButton->setStyleSheet("background-color: darkblue; color: white; font-weight: bold;");
+        getRightLayout()->addWidget(computerMoveButton);
+        connect(computerMoveButton, &QPushButton::clicked, this, &TicTacToe::Computer_move);
+
+
     }
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -88,8 +94,13 @@ TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
 }
 
 void TicTacToe::Player_move(int row, int column) {
+    if (currentTurn != P1) {
+        QMessageBox::information(this, "Wait", "It's not your turn!");
+        return;
+    }
     if (get_piece_at(row, column) == empty_state) {
         place(row, column, P1);
+        currentTurn = P2;
         emit move_Executed();
         updateBoardScore();
         updateBestMoves();
@@ -100,11 +111,12 @@ void TicTacToe::Player_move(int row, int column) {
             Findout_End("It's a draw!");
         } else {
             emit update_tree_Visualization();
-            QTimer::singleShot(500, this, &TicTacToe::Computer_move);
+            //QTimer::singleShot(500, this, &TicTacToe::Computer_move);
         }
     } else {
         QMessageBox::warning(this, "Invalid Move", "This cell is already occupied!");
     }
+
 }
 
 void TicTacToe::Computer_move() {
@@ -119,8 +131,11 @@ void TicTacToe::Computer_move() {
             Findout_End("The computer has won.");
         } else if (Findout_draw()) {
             Findout_End("It's a draw.");
+        } else {
+            currentTurn = P1;
         }
     }
+
 }
 
 bool TicTacToe::Findout_Win(PieceType player) {
