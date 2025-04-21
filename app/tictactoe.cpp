@@ -4,50 +4,6 @@
 #include <QTimer>
 #include <QLabel>
 
-PieceType** TicTacToe::Retrieve_stateofBoard() {
-    return Board::Retrieve_stateofBoard();
-}
-
-std::vector<std::pair<int, int>> TicTacToe::find_possiblemove() {
-    std::vector<std::pair<int, int>> moves;
-    PieceType** state = this->Retrieve_stateofBoard();
-
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            if (state[i][j] == empty_state) {
-                moves.push_back({i, j});
-            }
-        }
-    }
-    return moves;
-}
-
-void TicTacToe::update_stateofBoard(PieceType** next_stateofBoard) {
-    this->Board::update_stateofBoard(next_stateofBoard);
-
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            update_cell(i, j);
-        }
-    }
-}
-
-PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c, PieceType player) {
-    if (!state) return nullptr;
-
-    PieceType** next_stateofBoard = new PieceType*[3];
-    for (int i = 0; i < 3; i++) {
-        next_stateofBoard[i] = new PieceType[3];
-        for (int j = 0; j < 3; j++) {
-            next_stateofBoard[i][j] = state[i][j];
-        }
-    }
-
-    next_stateofBoard[r][c] = player;
-    return next_stateofBoard;
-}
-
-
 TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
     : Board(parent, 3, 3, enableRightWidget) {
 
@@ -120,6 +76,52 @@ void TicTacToe::Player_move(int row, int column) {
 
 }
 
+PieceType** TicTacToe::Retrieve_stateofBoard() {
+    return Board::Retrieve_stateofBoard();
+}
+
+std::vector<std::pair<int, int>> TicTacToe::find_possiblemove() {
+    std::vector<std::pair<int, int>> moves;
+    PieceType** state = this->Retrieve_stateofBoard();
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (state[i][j] == empty_state) {
+                moves.push_back({i, j});
+            }
+        }
+    }
+    return moves;
+}
+
+void TicTacToe::update_stateofBoard(PieceType** next_stateofBoard) {
+    this->Board::update_stateofBoard(next_stateofBoard);
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            update_cell(i, j);
+        }
+    }
+}
+
+PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c, PieceType player) {
+    if (!state) return nullptr;
+
+    PieceType** next_stateofBoard = new PieceType*[3];
+    for (int i = 0; i < 3; i++) {
+        next_stateofBoard[i] = new PieceType[3];
+        for (int j = 0; j < 3; j++) {
+            next_stateofBoard[i][j] = state[i][j];
+        }
+    }
+
+    next_stateofBoard[r][c] = player;
+    return next_stateofBoard;
+}
+
+
+
+
 void TicTacToe::Computer_move() {
     if (currentTurn != P2) {
         QMessageBox::information(this, "Wait", "It's not the computer's turn.");
@@ -174,6 +176,7 @@ void TicTacToe::Findout_End(const QString& result) {
     int ret = msgBox.exec();
     if (ret == QMessageBox::Yes) {
         Restart_Game();
+        currentTurn = P1;
     }
 }
 
@@ -183,10 +186,11 @@ void TicTacToe::Restart_Game() {
             place(i, j, empty_state);
         }
     }
+    currentTurn = P1;
     emit move_Executed();
     updateBoardScore();
     updateBestMoves();
-
+    emit update_tree_Visualization();
 }
 
 int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta) {
@@ -358,5 +362,3 @@ void TicTacToe::ClearPreview() {
     updateBoardScore();
     updateBestMoves();
 }
-
-

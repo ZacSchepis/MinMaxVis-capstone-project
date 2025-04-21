@@ -39,7 +39,8 @@ void TreeGraphics::update_Tree() {
             }
         }
 
-        Tree_withBoards(600, 50, 3, 0, gameInstance->Retrieve_stateofBoard(), bestMove, {-1, -1}, currentPlayer);
+        Tree_withBoards(600, 50, 3, 0, gameInstance->Retrieve_stateofBoard(),
+                        bestMove, {-1, -1}, currentPlayer, QPointF(-1, -1));
     }
 }
 
@@ -48,10 +49,11 @@ void TreeGraphics::update_Tree() {
 
 void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level,
                                    PieceType** state, std::pair<int, int> bestMove,
-                                   std::pair<int, int> currentMove, PieceType currentPlayer) {
+                                   std::pair<int, int> currentMove, PieceType currentPlayer,
+                                   QPointF parentPos) {
     if (depth == 0 || state == nullptr) return;
 
-    // Create disabled board widget
+    // Create disabled board
     TicTacToe* board = new TicTacToe(nullptr, false);
     board->update_stateofBoard(state);
 
@@ -70,6 +72,17 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level,
     QGraphicsProxyWidget* proxy = scene->addWidget(board);
     proxy->setScale(0.5);
     proxy->setPos(x, y);
+
+    // Compute current center position
+    QPointF currentCenter(x + board->width() * proxy->scale() / 2,
+                          y + board->height() * proxy->scale() / 2);
+
+    // Draw line from parent to this node
+    if (level == 1 && parentPos != QPointF(-1, -1)) {
+        QPen linePen = (currentPlayer == P1) ? QPen(Qt::red, 2) : QPen(Qt::green, 2);
+        QGraphicsLineItem* connection = scene->addLine(QLineF(parentPos, currentCenter), linePen);
+        connection->setZValue(-2);
+    }
 
     // Highlight best move at level 1
     if (level == 1 && currentMove == bestMove) {
@@ -106,13 +119,15 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level,
 
     for (size_t i = 0; i < possibleMoves.size(); i++) {
         int childX = x + (i - static_cast<int>(possibleMoves.size()) / 2) * 100;
+        int childY = y + 120;
 
         PieceType** newState = gameInstance->Visualize_Move(
             state, possibleMoves[i].first, possibleMoves[i].second, currentPlayer);
 
         if (newState) {
-            Tree_withBoards(childX, y + 120, depth - 1, level + 1,
-                            newState, bestMove, possibleMoves[i], nextPlayer);
+            Tree_withBoards(childX, childY, depth - 1, level + 1,
+                            newState, bestMove, possibleMoves[i], nextPlayer, currentCenter);
         }
     }
 }
+
