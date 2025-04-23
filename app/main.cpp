@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
         freopen("CONOUT$", "w", stderr);
     }
 #endif
+
     QApplication app(argc, argv);
     MainWindow window;
     window.setWindowTitle("MinMax Visualizers");
