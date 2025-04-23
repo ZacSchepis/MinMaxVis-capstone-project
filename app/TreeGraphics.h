@@ -20,7 +20,10 @@ private:
     QGraphicsView* view;
     TicTacToe* gameInstance;
 
-    void Tree_withBoards(int x, int y, int depth, int level, PieceType** state, std::pair<int, int> bestMove, std::pair<int, int> currentMove = {-1, -1});
+    void Tree_withBoards(int x, int y, int depth, int level,
+                         PieceType** state, std::pair<int, int> bestMove,
+                         std::pair<int, int> currentMove = {-1, -1},
+                         PieceType currentPlayer = P1);
 
 };
 

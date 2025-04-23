@@ -53,7 +53,13 @@ Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
     setLayout(outer_layout);
 }
 
-
+void Board::set_square(int r, int c, const char *colour) {
+    QLayoutItem *item = grid->itemAtPosition(r, c);
+    if(!item) return;
+    QWidget *widget = item->widget();
+    QPushButton *button = qobject_cast<QPushButton*>(widget);
+    button->setStyleSheet(QString("background-color: %1;").arg(colour));
+}
 
 
 

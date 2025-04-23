@@ -13,6 +13,7 @@
 #include "tictactoe.h"
 
 int main(int argc, char *argv[]) {
+
 #ifdef _WIN32
     if (AttachConsole(ATTACH_PARENT_PROCESS)) {
         freopen("CONOUT$", "w", stdout);
@@ -21,7 +22,7 @@ int main(int argc, char *argv[]) {
 #endif
     QApplication app(argc, argv);
     MainWindow window;
-    //    window.setWindowTitle("MinMax Visualizers");
+    window.setWindowTitle("MinMax Visualizers");
 
     /*Tic Tac Toe Game Code*/
     TicTacToe board_game(&window);
@@ -32,11 +33,11 @@ int main(int argc, char *argv[]) {
     // /*----------------------------------*/
 
     /*Checkers Game Run*/
-    // Checkers board_game;
-    // board_game.populate_board(true);
+//     Checkers board_game;
+//     board_game.populate_board(true);
+//    board_game.turns(20, P1);
     /*------------------------------------*/
 
-    //    board_game.turns(20);
     //    board_game.turns(200);
     window.setCentralWidget(&board_game);
     window.show();
