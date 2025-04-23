@@ -38,22 +38,59 @@ void TreeGraphics::update_Tree() {
                 }
             }
         }
-
         Tree_withBoards(600, 50, 3, 0, gameInstance->Retrieve_stateofBoard(),
                         bestMove, {-1, -1}, currentPlayer, QPointF(-1, -1));
     }
 }
 
+void TreeGraphics::drawConnectionLine(QPointF parent, QPointF child, PieceType currentPlayer) {
+    // Choose line color based on current player
+    QPen linePen = (currentPlayer == P1) ? QPen(Qt::red, 2) : QPen(Qt::green, 2);
 
+    // Create the line item between parent and child centers
+    QGraphicsLineItem* connection = scene->addLine(QLineF(parent, child), linePen);
+    connection->setZValue(-2); // Make sure it stays behind the boards
+}
 
+void TreeGraphics::highlightBestMove(QGraphicsProxyWidget* proxy,
+                                     const std::pair<int, int>& bestMove,
+                                     const std::pair<int, int>& currentMove,
+                                     PieceType currentPlayer) {
+    if (currentMove != bestMove) return;
+
+    QRectF widgetRect = proxy->widget()->geometry();
+    QRectF borderRect(0, 0, widgetRect.width() * proxy->scale(), widgetRect.height() * proxy->scale());
+
+    QPen highlightPen = (currentPlayer == P1) ? QPen(Qt::red, 4) : QPen(Qt::green, 4);
+    QString playerLabel = (currentPlayer == P1) ? "Player" : "Computer";
+
+    QGraphicsRectItem* border = scene->addRect(borderRect, highlightPen);
+    border->setPos(proxy->pos());
+    border->setZValue(proxy->zValue() - 1);
+
+    QPushButton* infoButton = new QPushButton("ℹ️");
+    infoButton->setStyleSheet("background-color: transparent; font-weight: bold;");
+    QGraphicsProxyWidget* infoProxy = scene->addWidget(infoButton);
+    infoProxy->setPos(proxy->pos().x() + borderRect.width() - 10, proxy->pos().y() - 10);
+    infoProxy->setZValue(proxy->zValue() + 1);
+
+    connect(infoButton, &QPushButton::clicked, [=]() {
+        QString details = QString("Best %1 Move: (%2, %3)\nBoard Score: %4")
+                          .arg(playerLabel)
+                          .arg(bestMove.first)
+                          .arg(bestMove.second)
+                          .arg(gameInstance->MinMax(0, currentPlayer == P2));
+        QMessageBox::information(nullptr, "Move Info", details);
+    });
+}
 
 void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level,
                                    PieceType** state, std::pair<int, int> bestMove,
                                    std::pair<int, int> currentMove, PieceType currentPlayer,
                                    QPointF parentPos) {
+
     if (depth == 0 || state == nullptr) return;
 
-    // Create disabled board
     TicTacToe* board = new TicTacToe(nullptr, false);
     board->update_stateofBoard(state);
 
@@ -73,47 +110,20 @@ void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level,
     proxy->setScale(0.5);
     proxy->setPos(x, y);
 
-    // Compute current center position
     QPointF currentCenter(x + board->width() * proxy->scale() / 2,
                           y + board->height() * proxy->scale() / 2);
 
     // Draw line from parent to this node
     if (level == 1 && parentPos != QPointF(-1, -1)) {
-        QPen linePen = (currentPlayer == P1) ? QPen(Qt::red, 2) : QPen(Qt::green, 2);
-        QGraphicsLineItem* connection = scene->addLine(QLineF(parentPos, currentCenter), linePen);
-        connection->setZValue(-2);
+        drawConnectionLine(parentPos, currentCenter, currentPlayer);
     }
 
     // Highlight best move at level 1
     if (level == 1 && currentMove == bestMove) {
-        QRectF widgetRect = proxy->widget()->geometry();
-        QRectF borderRect(0, 0, widgetRect.width() * proxy->scale(), widgetRect.height() * proxy->scale());
+        highlightBestMove(proxy, bestMove, currentMove, currentPlayer);
 
-        QPen highlightPen = (currentPlayer == P1) ? QPen(Qt::red, 4) : QPen(Qt::green, 4);
-        QString playerLabel = (currentPlayer == P1) ? "Player" : "Computer";
-
-        QGraphicsRectItem* border = scene->addRect(borderRect, highlightPen);
-        border->setPos(proxy->pos());
-        border->setZValue(proxy->zValue() - 1);
-
-        QPushButton* infoButton = new QPushButton("ℹ️");
-        infoButton->setStyleSheet("background-color: transparent; font-weight: bold;");
-
-        QGraphicsProxyWidget* infoProxy = scene->addWidget(infoButton);
-        infoProxy->setPos(proxy->pos().x() + borderRect.width() - 10, proxy->pos().y() - 10);
-        infoProxy->setZValue(proxy->zValue() + 1);
-
-        connect(infoButton, &QPushButton::clicked, [=]() {
-            QString details = QString("Best %1 Move: (%2, %3)\nBoard Score: %4")
-                              .arg(playerLabel)
-                              .arg(bestMove.first)
-                              .arg(bestMove.second)
-                              .arg(gameInstance->MinMax(0, currentPlayer == P2));
-            QMessageBox::information(nullptr, "Move Info", details);
-        });
     }
 
-    // Recurse to children
     std::vector<std::pair<int, int>> possibleMoves = gameInstance->find_possiblemove();
     PieceType nextPlayer = (currentPlayer == P1) ? P2 : P1;
 
