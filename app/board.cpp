@@ -3,6 +3,8 @@
 #include <QIcon.h>
 #include <QCoreApplication.h>
 #include <QLabel>
+#include <QScrollArea>
+
 Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
     : QWidget{parent}, rows(r), cols(c), cell_size(50), right_panel(nullptr), right_layout(nullptr)
 {
@@ -44,11 +46,15 @@ Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
     if (showRightPanel) {
         right_panel = new QWidget(this);
         right_panel->setFixedWidth(350);
+        right_panel->setMinimumHeight(10);  // 👈 Just add this line
         right_panel->setStyleSheet("background-color: #ddd;");
+
         right_layout = new QVBoxLayout(right_panel);
         right_panel->setLayout(right_layout);
+
         outer_layout->addWidget(right_panel);
     }
+
 
     setLayout(outer_layout);
 }
