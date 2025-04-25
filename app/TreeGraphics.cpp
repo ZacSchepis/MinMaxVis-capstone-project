@@ -1,6 +1,8 @@
 #include "TreeGraphics.h"
 #include <QGraphicsProxyWidget>
 #include <QPen>
+#include <stack>
+
 
 TreeGraphics::TreeGraphics(QWidget* parent, TicTacToe* game) : QWidget(parent), gameInstance(game) {
     scene = new QGraphicsScene(this);
@@ -38,8 +40,7 @@ void TreeGraphics::update_Tree() {
                 }
             }
         }
-        Tree_withBoards(600, 50, 3, 0, gameInstance->Retrieve_stateofBoard(),
-                        bestMove, {-1, -1}, currentPlayer, QPointF(-1, -1));
+        Tree_withBoards_Iterative(600, 50, 3);
     }
 }
 
@@ -84,60 +85,74 @@ void TreeGraphics::highlightBestMove(QGraphicsProxyWidget* proxy,
     });
 }
 
-void TreeGraphics::Tree_withBoards(int x, int y, int depth, int level,
-                                   PieceType** state, std::pair<int, int> bestMove,
-                                   std::pair<int, int> currentMove, PieceType currentPlayer,
-                                   QPointF parentPos) {
+void TreeGraphics::Tree_withBoards_Iterative(int startX, int startY, int maxDepth) {
+    if (!gameInstance) return;
 
-    if (depth == 0 || state == nullptr) return;
+    std::stack<TreeNode> stack;
+    TreeNode root = { startX, startY, maxDepth, 0,
+                      gameInstance->Retrieve_stateofBoard(),
+                      gameInstance->move_bestcalculation(),
+                      {-1, -1},
+                      gameInstance->currentTurn,
+                      QPointF(-1, -1) };
 
-    TicTacToe* board = new TicTacToe(nullptr, false);
-    board->update_stateofBoard(state);
+    stack.push(root);
 
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            QLayoutItem *item = board->grid->itemAtPosition(i, j);
-            if (item) {
-                QWidget *widget = item->widget();
-                if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
-                    button->setDisabled(true);
+    while (!stack.empty()) {
+        TreeNode node = stack.top();
+        stack.pop();
+
+        if (node.depth == 0 || node.state == nullptr)
+            continue;
+
+        TicTacToe* board = new TicTacToe(nullptr, false);
+        board->update_stateofBoard(node.state);
+
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j) {
+                QLayoutItem* item = board->grid->itemAtPosition(i, j);
+                if (item) {
+                    if (QPushButton* button = qobject_cast<QPushButton*>(item->widget()))
+                        button->setDisabled(true);
                 }
+            }
+
+        QGraphicsProxyWidget* proxy = scene->addWidget(board);
+        proxy->setScale(0.5);
+        proxy->setPos(node.x, node.y);
+
+        QPointF currentCenter(node.x + board->width() * proxy->scale() / 2,
+                              node.y + board->height() * proxy->scale() / 2);
+
+        if (node.level == 1 && node.parentPos != QPointF(-1, -1))
+            drawConnectionLine(node.parentPos, currentCenter, node.currentPlayer);
+
+        if (node.level == 1) {
+            if (node.currentMove == gameInstance->move_bestcalculation()) {
+                highlightBestMove(proxy, node.bestMove, node.currentMove, node.currentPlayer);
+            }
+        }
+
+        std::vector<std::pair<int, int>> moves = gameInstance->find_possiblemove();
+        PieceType nextPlayer = (node.currentPlayer == P1) ? P2 : P1;
+
+        for (size_t i = 0; i < moves.size(); ++i) {
+            int childX = node.x + (i - static_cast<int>(moves.size()) / 2) * 100;
+            int childY = node.y + 120;
+
+            PieceType** newState = gameInstance->Visualize_Move(node.state, moves[i].first, moves[i].second, node.currentPlayer);
+            if (newState) {
+                TreeNode childNode = {
+                    childX, childY, node.depth - 1, node.level + 1,
+                    newState, node.bestMove, moves[i],
+                    nextPlayer, currentCenter
+                };
+                stack.push(childNode);
             }
         }
     }
-
-    QGraphicsProxyWidget* proxy = scene->addWidget(board);
-    proxy->setScale(0.5);
-    proxy->setPos(x, y);
-
-    QPointF currentCenter(x + board->width() * proxy->scale() / 2,
-                          y + board->height() * proxy->scale() / 2);
-
-    // Draw line from parent to this node
-    if (level == 1 && parentPos != QPointF(-1, -1)) {
-        drawConnectionLine(parentPos, currentCenter, currentPlayer);
-    }
-
-    // Highlight best move at level 1
-    if (level == 1 && currentMove == bestMove) {
-        highlightBestMove(proxy, bestMove, currentMove, currentPlayer);
-
-    }
-
-    std::vector<std::pair<int, int>> possibleMoves = gameInstance->find_possiblemove();
-    PieceType nextPlayer = (currentPlayer == P1) ? P2 : P1;
-
-    for (size_t i = 0; i < possibleMoves.size(); i++) {
-        int childX = x + (i - static_cast<int>(possibleMoves.size()) / 2) * 100;
-        int childY = y + 120;
-
-        PieceType** newState = gameInstance->Visualize_Move(
-            state, possibleMoves[i].first, possibleMoves[i].second, currentPlayer);
-
-        if (newState) {
-            Tree_withBoards(childX, childY, depth - 1, level + 1,
-                            newState, bestMove, possibleMoves[i], nextPlayer, currentCenter);
-        }
-    }
 }
+
+
+
 

@@ -106,6 +106,16 @@ private:
                          PieceType currentPlayer = P1,
                          QPointF parentPos = QPointF(-1, -1));
 
+    struct TreeNode {
+        int x, y, depth, level;
+        PieceType** state;
+        std::pair<int, int> bestMove;
+        std::pair<int, int> currentMove;
+        PieceType currentPlayer;
+        QPointF parentPos;
+    };
+
+    void Tree_withBoards_Iterative(int startX, int startY, int maxDepth);
 };
 
 #endif // TREEGRAPHICS_H
