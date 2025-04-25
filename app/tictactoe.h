@@ -109,6 +109,18 @@ public:
     void PreviewNextMove();
 
     PieceType currentTurn = P1;
+    /**
+    * @brief move_bestcalculation
+    * Determines the optimal move for the computer (P2) by simulating all possible moves
+    * on the current board and evaluating each using the MinMax algorithm with Alpha-Beta pruning.
+    * Tracks the move with the highest score and returns it as the ideal choice.
+    *
+    * This function is typically called during the computer's turn to decide its next action.
+    *
+    * @return A pair of integers (row, column) representing the best move for the computer.
+    *         Returns {-1, -1} if no valid moves are available.
+    */
+    std::pair<int, int> move_bestcalculation();
 
     signals:
         void move_Executed();
@@ -177,18 +189,7 @@ private:
     */
     void Restart_Game();
 
-    /**
-    * @brief move_bestcalculation
-    * Determines the optimal move for the computer (P2) by simulating all possible moves
-    * on the current board and evaluating each using the MinMax algorithm with Alpha-Beta pruning.
-    * Tracks the move with the highest score and returns it as the ideal choice.
-    *
-    * This function is typically called during the computer's turn to decide its next action.
-    *
-    * @return A pair of integers (row, column) representing the best move for the computer.
-    *         Returns {-1, -1} if no valid moves are available.
-    */
-    std::pair<int, int> move_bestcalculation();
+
 
     /**
     * @brief updateBoardScore
