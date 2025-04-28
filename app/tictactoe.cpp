@@ -198,7 +198,9 @@ void TicTacToe::Restart_Game() {
     emit update_tree_Visualization();
 }
 
-int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta) {
+int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta, MinMaxStatistics* stats) {
+    if (stats) stats->nodesExplored++;
+
     if (Findout_Win(P2)) return 10;
     if (Findout_Win(P1)) return -10;
     if (Findout_draw()) return 0;
@@ -209,11 +211,24 @@ int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta
             for (int j = 0; j < 3; j++) {
                 if (get_piece_at(i, j) == empty_state) {
                     place(i, j, P2);
-                    int Score = MinMax(recursionLevel + 1, false, alpha, beta);
+                    int Score = MinMax(recursionLevel + 1, false, alpha, beta, stats);
                     place(i, j, empty_state);
+
+                    if (stats && recursionLevel == 0) {
+                        stats->moveScores.push_back({{i, j}, Score});
+                    }
+
                     Best_Score = std::max(Score, Best_Score);
                     alpha = std::max(alpha, Score);
-                    if (beta <= alpha) break;
+
+                    if (stats) {
+                        stats->alphaBetaSnapshots.push_back({recursionLevel, alpha, beta, Score});
+                    }
+
+                    if (beta <= alpha) {
+                        if (stats) stats->nodesPruned++;
+                        break;
+                    }
                 }
             }
         }
@@ -224,11 +239,24 @@ int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta
             for (int j = 0; j < 3; j++) {
                 if (get_piece_at(i, j) == empty_state) {
                     place(i, j, P1);
-                    int Score = MinMax(recursionLevel + 1, true, alpha, beta);
+                    int Score = MinMax(recursionLevel + 1, true, alpha, beta, stats);
                     place(i, j, empty_state);
+
+                    if (stats && recursionLevel == 0) {
+                        stats->moveScores.push_back({{i, j}, Score});
+                    }
+
                     Worst_Score = std::min(Score, Worst_Score);
                     beta = std::min(beta, Score);
-                    if (beta <= alpha) break;
+
+                    if (stats) {
+                        stats->alphaBetaSnapshots.push_back({recursionLevel, alpha, beta, Score});
+                    }
+
+                    if (beta <= alpha) {
+                        if (stats) stats->nodesPruned++;
+                        break;
+                    }
                 }
             }
         }

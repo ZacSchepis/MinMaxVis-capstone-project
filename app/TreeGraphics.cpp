@@ -76,25 +76,164 @@ void TreeGraphics::highlightBestMove(QGraphicsProxyWidget* proxy,
     infoProxy->setZValue(proxy->zValue() + 1);
 
     connect(infoButton, &QPushButton::clicked, [=]() {
-        QString details = QString("Best %1 Move: (%2, %3)\nBoard Score: %4")
-                          .arg(playerLabel)
-                          .arg(bestMove.first)
-                          .arg(bestMove.second)
-                          .arg(gameInstance->MinMax(0, currentPlayer == P2));
-        QMessageBox::information(nullptr, "Move Info", details);
+        QString perspective = (gameInstance->currentTurn == P2) ? "Computer" : "Player";
+
+        MinMaxStatistics stats;
+        gameInstance->MinMax(0, gameInstance->currentTurn == P2, INT_MIN, INT_MAX, &stats);
+
+        QString explanation;
+        explanation += QString("<b>The best move that the MinMax Alogorithm calculated is:  %1:</b> (%2, %3)<br><br>")
+                           .arg(perspective)
+                           .arg(bestMove.first)
+                           .arg(bestMove.second);
+
+        explanation += "<u><b>Basis of decision being made:</b></u><br>";
+        QString goal;
+        if (gameInstance->currentTurn == P2) {
+            goal = "maximize";
+        } else {
+            goal = "minimize";
+        }
+
+        explanation += QString("- %1 is trying to %2 the score.<br>").arg(perspective).arg(goal);
+
+        explanation += "- Possible moves were simulated recursively.<br>";
+        explanation += "- We predicted the future move of the opponent to calculate the best move.<br>";
+        explanation += "- We used Alpha-Beta pruning to skip unnecessary paths.<br><br>";
+
+        explanation += "<u><b>All the available moves evaluated with their score:</b></u><br>";
+        for (auto& moveScore : stats.moveScores) {
+            explanation += QString("• Move (%1, %2) ➔ Score: %3<br>")
+                               .arg(moveScore.first.first)
+                               .arg(moveScore.first.second)
+                               .arg(moveScore.second);
+        }
+
+        explanation += "<br><u><b>The actual Summary of Alpha-beta Pruning:</b></u><br>";
+        explanation += QString("• Total number of Nodes Explored: %1<br>").arg(stats.nodesExplored);
+        explanation += QString("• Total number of Nodes Pruned: %1<br><br>").arg(stats.nodesPruned);
+
+        if (stats.nodesExplored > 0) {
+            double pruningEfficiency = (static_cast<double>(stats.nodesPruned) / stats.nodesExplored) * 100.0;
+            explanation += QString("<b>Actual efficiency of Alpha-Beta Pruning is:</b> ~%1% of the search space was pruned.<br><br>")
+                               .arg(QString::number(pruningEfficiency, 'f', 2));
+        }
+
+        // we are finding the best move here
+        int bestEvalScore = -9999;
+        std::pair<int, int> bestEvalMove = {-1, -1};
+        if (!stats.moveScores.empty()) {
+            bestEvalScore = (gameInstance->currentTurn == P2) ? INT_MIN : INT_MAX;
+            for (auto& move : stats.moveScores) {
+                if ((gameInstance->currentTurn == P2 && move.second > bestEvalScore) ||
+                    (gameInstance->currentTurn == P1 && move.second < bestEvalScore)) {
+                    bestEvalScore = move.second;
+                    bestEvalMove = move.first;
+                }
+            }
+        }
+
+        int sameScoreCount = 0;
+        for (auto& move : stats.moveScores) {
+            if (move.second == bestEvalScore) {
+                sameScoreCount++;
+            }
+        }
+
+        bool isBadMove = false;
+
+        TicTacToe tempGame(nullptr, false);
+        PieceType** clonedState = gameInstance->Retrieve_stateofBoard();
+
+        // here we are deep cloning the code
+        PieceType** newState = new PieceType*[3];
+        for (int i = 0; i < 3; i++) {
+            newState[i] = new PieceType[3];
+            for (int j = 0; j < 3; j++) {
+                newState[i][j] = clonedState[i][j];
+            }
+        }
+
+        tempGame.update_stateofBoard(newState);
+
+        // applying the best evaluation  move here
+        tempGame.place(bestEvalMove.first, bestEvalMove.second, (gameInstance->currentTurn == P2) ? P2 : P1);
+
+        // this is for the opponent's turn
+        PieceType opponent = (gameInstance->currentTurn == P2) ? P1 : P2;
+        std::vector<std::pair<int, int>> opponentMoves = tempGame.find_possiblemove();
+        for (auto& move : opponentMoves) {
+            tempGame.place(move.first, move.second, opponent);
+            if (tempGame.Findout_Win(opponent)) {
+                isBadMove = true;
+            }
+            tempGame.place(move.first, move.second, empty_state); // undo move
+        }
+
+        // here we are freeing the memory
+        for (int i = 0; i < 3; i++) delete[] newState[i];
+        delete[] newState;
+
+        // various explanation based on the various moves that we make
+        explanation += QString("<b>Reason for choosing (%1, %2):</b><br>")
+                           .arg(bestEvalMove.first)
+                           .arg(bestEvalMove.second);
+
+        if (isBadMove) {
+            explanation += "- Although the score was optimal, this move exposed an immediate win opportunity for the opponent.<br>";
+            explanation += "- This highlights the limitation of purely score-based selection without deep strategic analysis.<br>";
+        } else if (sameScoreCount > 1) {
+            explanation += QString("- Multiple moves had the same evaluation score of %1.<br>").arg(bestEvalScore);
+            explanation += "- We selected this move based on the move order we had.<br>";
+        } else {
+            explanation += QString("- This move had the best evaluation socre of  %1 among all the move-options available.<br>").arg(bestEvalScore);
+        }
+
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Move Explanation (Detailed)");
+        msgBox.setTextFormat(Qt::RichText);
+        msgBox.setText(explanation);
+        msgBox.exec();
     });
+
+
+
 }
 
 void TreeGraphics::Tree_withBoards_Iterative(int startX, int startY, int maxDepth) {
     if (!gameInstance) return;
 
     std::stack<TreeNode> stack;
+
+    // this will help in determining the best move as per the current move
+    std::pair<int, int> bestMove;
+    if (gameInstance->currentTurn == P2) { // for computer's turn
+        bestMove = gameInstance->move_bestcalculation();
+    } else { // this is for the scenario of Player's turn
+        int bestScore = INT_MAX;
+        bestMove = {-1, -1};
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                if (gameInstance->get_piece_at(i, j) == empty_state) {
+                    gameInstance->place(i, j, P1);
+                    int score = gameInstance->MinMax(0, true);
+                    gameInstance->place(i, j, empty_state);
+
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestMove = {i, j};
+                    }
+                }
+            }
+        }
+    }
+
     TreeNode root = { startX, startY, maxDepth, 0,
-                      gameInstance->Retrieve_stateofBoard(),
-                      gameInstance->move_bestcalculation(),
-                      {-1, -1},
-                      gameInstance->currentTurn,
-                      QPointF(-1, -1) };
+                     gameInstance->Retrieve_stateofBoard(),
+                     bestMove,
+                     {-1, -1},
+                     gameInstance->currentTurn,
+                     QPointF(-1, -1) };
 
     stack.push(root);
 
@@ -128,7 +267,7 @@ void TreeGraphics::Tree_withBoards_Iterative(int startX, int startY, int maxDept
             drawConnectionLine(node.parentPos, currentCenter, node.currentPlayer);
 
         if (node.level == 1) {
-            if (node.currentMove == gameInstance->move_bestcalculation()) {
+            if (node.currentMove == node.bestMove) { //  correctly comparing for also getting the best move for the player properly
                 highlightBestMove(proxy, node.bestMove, node.currentMove, node.currentPlayer);
             }
         }
@@ -152,7 +291,6 @@ void TreeGraphics::Tree_withBoards_Iterative(int startX, int startY, int maxDept
         }
     }
 }
-
 
 
 
