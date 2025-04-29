@@ -24,33 +24,40 @@ TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
 }
 
 void TicTacToe::SetUpRightWidget() {
+    QString labelStyle = "color: black; font-size: 12px;";
+    QString buttonStyle = "background-color: black; color: white; font-size: 12px; padding: 4px;";
+
     boardScoreLabel = new QLabel("Board Score:", this);
-    boardScoreLabel->setStyleSheet("color: black;");
+    boardScoreLabel->setStyleSheet(labelStyle);
     getRightLayout()->addWidget(boardScoreLabel);
 
-    bestPlayerMoveLabel = new QLabel("Best Move for Player: ", this);
-    bestPlayerMoveLabel->setStyleSheet("color: black;");
+    bestPlayerMoveLabel = new QLabel("Best Move for Player:", this);
+    bestPlayerMoveLabel->setStyleSheet(labelStyle);
     getRightLayout()->addWidget(bestPlayerMoveLabel);
 
-    bestComputerMoveLabel = new QLabel("Best Move for Computer: ", this);
-    bestComputerMoveLabel->setStyleSheet("color: black;");
+    bestComputerMoveLabel = new QLabel("Best Move for Computer:", this);
+    bestComputerMoveLabel->setStyleSheet(labelStyle);
     getRightLayout()->addWidget(bestComputerMoveLabel);
 
     QPushButton* previewNextMoveButton = new QPushButton("Preview Next Move", this);
-    previewNextMoveButton->setStyleSheet("background-color: black; color: white; font-weight: bold;");
+    previewNextMoveButton->setStyleSheet(buttonStyle);
+    previewNextMoveButton->setFixedHeight(28);
     getRightLayout()->addWidget(previewNextMoveButton);
     connect(previewNextMoveButton, &QPushButton::clicked, this, &TicTacToe::PreviewNextMove);
 
     QPushButton* clearPreviewButton = new QPushButton("Clear Preview", this);
-    clearPreviewButton->setStyleSheet("background-color: black; color: white; font-weight: bold;");
+    clearPreviewButton->setStyleSheet(buttonStyle);
+    clearPreviewButton->setFixedHeight(28);
     getRightLayout()->addWidget(clearPreviewButton);
     connect(clearPreviewButton, &QPushButton::clicked, this, &TicTacToe::ClearPreview);
 
     QPushButton* computerMoveButton = new QPushButton("Computer Move", this);
-    computerMoveButton->setStyleSheet("background-color: darkblue; color: white; font-weight: bold;");
+    computerMoveButton->setStyleSheet("background-color: darkblue; color: white; font-size: 12px; padding: 4px;");
+    computerMoveButton->setFixedHeight(28);
     getRightLayout()->addWidget(computerMoveButton);
     connect(computerMoveButton, &QPushButton::clicked, this, &TicTacToe::Computer_move);
 }
+
 
 void TicTacToe::Player_move(int row, int column) {
     if (currentTurn != P1) {
@@ -191,7 +198,9 @@ void TicTacToe::Restart_Game() {
     emit update_tree_Visualization();
 }
 
-int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta) {
+int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta, MinMaxStatistics* stats) {
+    if (stats) stats->nodesExplored++;
+
     if (Findout_Win(P2)) return 10;
     if (Findout_Win(P1)) return -10;
     if (Findout_draw()) return 0;
@@ -202,11 +211,24 @@ int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta
             for (int j = 0; j < 3; j++) {
                 if (get_piece_at(i, j) == empty_state) {
                     place(i, j, P2);
-                    int Score = MinMax(recursionLevel + 1, false, alpha, beta);
+                    int Score = MinMax(recursionLevel + 1, false, alpha, beta, stats);
                     place(i, j, empty_state);
+
+                    if (stats && recursionLevel == 0) {
+                        stats->moveScores.push_back({{i, j}, Score});
+                    }
+
                     Best_Score = std::max(Score, Best_Score);
                     alpha = std::max(alpha, Score);
-                    if (beta <= alpha) break;
+
+                    if (stats) {
+                        stats->alphaBetaSnapshots.push_back({recursionLevel, alpha, beta, Score});
+                    }
+
+                    if (beta <= alpha) {
+                        if (stats) stats->nodesPruned++;
+                        break;
+                    }
                 }
             }
         }
@@ -217,11 +239,24 @@ int TicTacToe::MinMax(int recursionLevel, bool isMaximizing, int alpha, int beta
             for (int j = 0; j < 3; j++) {
                 if (get_piece_at(i, j) == empty_state) {
                     place(i, j, P1);
-                    int Score = MinMax(recursionLevel + 1, true, alpha, beta);
+                    int Score = MinMax(recursionLevel + 1, true, alpha, beta, stats);
                     place(i, j, empty_state);
+
+                    if (stats && recursionLevel == 0) {
+                        stats->moveScores.push_back({{i, j}, Score});
+                    }
+
                     Worst_Score = std::min(Score, Worst_Score);
                     beta = std::min(beta, Score);
-                    if (beta <= alpha) break;
+
+                    if (stats) {
+                        stats->alphaBetaSnapshots.push_back({recursionLevel, alpha, beta, Score});
+                    }
+
+                    if (beta <= alpha) {
+                        if (stats) stats->nodesPruned++;
+                        break;
+                    }
                 }
             }
         }
@@ -241,15 +276,21 @@ std::pair<int, int> TicTacToe::move_bestcalculation() {
                 place(i, j, P2);
                 int Score = MinMax(0, false, alpha, beta);
                 place(i, j, empty_state);
+
                 if (Score > Best_Score) {
                     Best_Score = Score;
                     IdealMove = {i, j};
                 }
+
+                alpha = std::max(alpha, Score);
+                if (beta <= alpha)
+                    break;
             }
         }
     }
     return IdealMove;
 }
+
 
 int TicTacToe::updateBoardScore() {
     int score = MinMax(0, true, INT_MIN, INT_MAX);
@@ -287,6 +328,7 @@ void TicTacToe::updateBestMoves() {
 void TicTacToe::PreviewNextMove() {
     PieceType** currentState = Retrieve_stateofBoard();
 
+    // Save current state in previewHistory for ClearPreview
     PieceType** backup = new PieceType*[3];
     for (int i = 0; i < 3; ++i) {
         backup[i] = new PieceType[3];
@@ -296,49 +338,51 @@ void TicTacToe::PreviewNextMove() {
     }
     previewHistory.push_back(backup);
 
-
-    std::pair<int, int> compMove = move_bestcalculation();
-    if (compMove.first == -1) return;
-
-    PieceType** afterCompMove = Visualize_Move(currentState, compMove.first, compMove.second, P2);
-    if (!afterCompMove) return;
-
-    PieceType** tempBoard = new PieceType*[3];
+    // Deep copy currentState to previewBoard
+    PieceType** previewBoard = new PieceType*[3];
     for (int i = 0; i < 3; i++) {
-        tempBoard[i] = new PieceType[3];
+        previewBoard[i] = new PieceType[3];
         for (int j = 0; j < 3; j++) {
-            tempBoard[i][j] = afterCompMove[i][j];
+            previewBoard[i][j] = currentState[i][j];
         }
     }
 
-    std::pair<int, int> playerMove = {-1, -1};
-    int bestScore = INT_MAX;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            if (tempBoard[i][j] == empty_state) {
-                tempBoard[i][j] = P1;
-                int score = MinMax(0, true);
-                tempBoard[i][j] = empty_state;
-                if (score < bestScore) {
-                    bestScore = score;
-                    playerMove = {i, j};
+    // Get next move based on whose turn it is
+    std::pair<int, int> move = {-1, -1};
+    if (currentTurn == P2) {
+        move = move_bestcalculation();
+    } else {
+        int bestScore = INT_MAX;
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                if (previewBoard[i][j] == empty_state) {
+                    previewBoard[i][j] = P1;
+                    int score = MinMax(0, true);
+                    previewBoard[i][j] = empty_state;
+                    if (score < bestScore) {
+                        bestScore = score;
+                        move = {i, j};
+                    }
                 }
             }
         }
     }
 
-    if (playerMove.first != -1)
-        tempBoard[playerMove.first][playerMove.second] = P1;
+    if (move.first != -1) {
+        previewBoard[move.first][move.second] = currentTurn;
+    }
 
-    update_stateofBoard(tempBoard);
+    update_stateofBoard(previewBoard);
+    // Flip turn after preview
+    currentTurn = (currentTurn == P1) ? P2 : P1;
+
 
     for (int i = 0; i < 3; ++i) {
-        delete[] tempBoard[i];
-        delete[] afterCompMove[i];
+        delete[] previewBoard[i];
     }
-    delete[] tempBoard;
-    delete[] afterCompMove;
+    delete[] previewBoard;
 }
+
 
 void TicTacToe::ClearPreview() {
     if (previewHistory.empty()) return;

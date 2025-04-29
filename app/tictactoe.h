@@ -7,10 +7,28 @@
 #include <utility>
 #include <vector>
 
+struct MinMaxStatistics {
+    int nodesExplored = 0;
+    int nodesPruned = 0;
+    std::vector<std::pair<std::pair<int, int>, int>> moveScores; // (row,col) -> score
+    std::vector<std::tuple<int, int, int, int>> alphaBetaSnapshots; // depth, alpha, beta, score
+};
+
+
 class TicTacToe : public Board {
     Q_OBJECT
 
 public:
+
+    /**
+    * @brief Findout_Win
+    * Checks whether the specified player has won the game.
+    * Evaluates all possible winning conditions: horizontal, vertical, and diagonal lines.
+    *
+    * @param player The player (P1 or P2) to check for a winning condition.
+    * @return true if the player has achieved a winning condition; false otherwise.
+    */
+    bool Findout_Win(PieceType player);
     /**
     * @brief TicTacToe::TicTacToe
     * Constructor for the TicTacToe class. Initializes a 3x3 game board,
@@ -90,7 +108,9 @@ public:
     *
     * @return The best score found for the current player in this game state.
     */
-    int MinMax(int recursionLevel, bool isMaximizing, int alpha = INT_MIN, int beta = INT_MAX);
+    int MinMax(int recursionLevel, bool isMaximizing, int alpha = INT_MIN, int beta = INT_MAX, MinMaxStatistics* stats = nullptr);
+
+
 
     /**
     * @brief PreviewNextMove
@@ -109,6 +129,18 @@ public:
     void PreviewNextMove();
 
     PieceType currentTurn = P1;
+    /**
+    * @brief move_bestcalculation
+    * Determines the optimal move for the computer (P2) by simulating all possible moves
+    * on the current board and evaluating each using the MinMax algorithm with Alpha-Beta pruning.
+    * Tracks the move with the highest score and returns it as the ideal choice.
+    *
+    * This function is typically called during the computer's turn to decide its next action.
+    *
+    * @return A pair of integers (row, column) representing the best move for the computer.
+    *         Returns {-1, -1} if no valid moves are available.
+    */
+    std::pair<int, int> move_bestcalculation();
 
     signals:
         void move_Executed();
@@ -140,15 +172,6 @@ private:
      */
     void Computer_move();
 
-    /**
-    * @brief Findout_Win
-    * Checks whether the specified player has won the game.
-    * Evaluates all possible winning conditions: horizontal, vertical, and diagonal lines.
-    *
-    * @param player The player (P1 or P2) to check for a winning condition.
-    * @return true if the player has achieved a winning condition; false otherwise.
-    */
-    bool Findout_Win(PieceType player);
 
     /**
     * @brief Findout_draw
@@ -177,18 +200,7 @@ private:
     */
     void Restart_Game();
 
-    /**
-    * @brief move_bestcalculation
-    * Determines the optimal move for the computer (P2) by simulating all possible moves
-    * on the current board and evaluating each using the MinMax algorithm with Alpha-Beta pruning.
-    * Tracks the move with the highest score and returns it as the ideal choice.
-    *
-    * This function is typically called during the computer's turn to decide its next action.
-    *
-    * @return A pair of integers (row, column) representing the best move for the computer.
-    *         Returns {-1, -1} if no valid moves are available.
-    */
-    std::pair<int, int> move_bestcalculation();
+
 
     /**
     * @brief updateBoardScore
