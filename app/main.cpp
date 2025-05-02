@@ -4,13 +4,14 @@
 #include <QTimer>
 // #include "sample_board.h"
 // #include "tictactoe.h"
- #include "checkers.h"
+#include "checkers.h"
 #include <windows.h>
 
 #include "QApplication"
 #include "QPushButton"
 #include "TreeGraphics.h"
 #include "tictactoe.h"
+#include "startmenu.h"
 
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
@@ -21,16 +22,21 @@ int main(int argc, char *argv[]) {
 #endif
     QApplication app(argc, argv);
     MainWindow window;
+
+    //joehannsenn 3.13
+    StartMenu startMenu(&window);
+    startMenu.launch_startmenu();
+
 //    window.setWindowTitle("MinMax Visualizers");
 //    TicTacToe board_game(&window);
 //    TreeGraphics treeWidget;
 //    treeWidget.show();
-    Checkers board_game;
-    board_game.populate_board(true);
+    //Checkers board_game;
+    //board_game.populate_board(true);
 //    board_game.turns(20);
 //    board_game.turns(200);
-    window.setCentralWidget(&board_game);
-    window.show();
+    //window.setCentralWidget(&board_game);
+    //window.show();
 //    board_game.find_best_move();
 
     return app.exec();

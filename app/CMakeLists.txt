@@ -19,6 +19,8 @@ set(PROJECT_SOURCES
         mainwindow.ui
         TreeGraphics.h
         TreeGraphics.cpp
+        startmenu.cpp
+        startmenu.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -30,6 +32,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         sample_board.h sample_board.cpp
         tictactoe.h tictactoe.cpp
         checkers.h checkers.cpp
+        startmenu.h startmenu.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET app APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
