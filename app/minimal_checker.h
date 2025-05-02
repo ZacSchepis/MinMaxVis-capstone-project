@@ -12,7 +12,11 @@ struct PiecePos {
     bool is_king = false;
     bool directionUp = false;
 };
-
+typedef struct PieceMoves {
+    PiecePos* piece;
+    std::list<std::pair<PiecePos*, PiecePos*>> moves;
+    bool hasJump;
+} PieceMoves;
 struct MoveDecision {
     PiecePos* pOrigin;
     PiecePos* pEnd;
@@ -26,12 +30,14 @@ struct MoveBackup {
 };
 class minimal_checker {
 private:
+    int turn_count;
     std::array<PieceType, 3> opposing;
 public:
     std::array<int, 2> piece_counter;
     std::list<PiecePos *> pieces;
-
-    minimal_checker();
+    int get_turn_count() { return turn_count;}
+    int incr_turn_count() { return turn_count++; }
+    minimal_checker(int turns);
     /**
      * @brief minimal_checker::is_terminal_node Schepis-4/17
      * Checks if a current game state can't be played further
@@ -76,7 +82,7 @@ public:
      * @param p - Generate all moves from PiecePosition p
      * @return
      */
-    std::list<std::pair<PiecePos *, PiecePos *>> *generate_moves(PiecePos *p);
+    PieceMoves* generate_moves(PiecePos *p);
 
     /**
      * @brief minimal_checker::maybe_add Schepis-4/17
@@ -90,7 +96,7 @@ public:
      * @param p - PiecePosition to start looking from
      * @return
      */
-    PieceType
+    bool
     maybe_add(std::list<std::pair<PiecePos *, PiecePos *>> *l, int r, int c, int rOffset, int cOffset, PiecePos *p);
 
     /**

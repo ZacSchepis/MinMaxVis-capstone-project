@@ -27,7 +27,10 @@ public:
     void update_stateofBoard(PieceType** newState);
     QGridLayout *grid;
     PieceType** Retrieve_stateofBoard() const;
-    explicit Board(QWidget *parent = nullptr, int r = 3, int c = 3,bool showRightPanel = false);
+    explicit Board(QWidget *parent = nullptr, int r = 3, int c = 3,
+                   bool showRightPanel = false,
+                   bool colour = false
+                           );
     void toggleRightPanel(bool show);
 
 
@@ -78,6 +81,7 @@ public:
 
     void set_styles(QString const &styles);
     int get_size(int level);
+    virtual void callbackSetup() = 0;
 protected:
     void paintEvent(QPaintEvent* event) override;
     QWidget* right_panel = nullptr;

@@ -16,9 +16,10 @@ struct MinMaxStatistics {
 
 
 class TicTacToe : public Board {
-    Q_OBJECT
+Q_OBJECT
 
 public:
+    void callbackSetup() override;
 
     /**
     * @brief Findout_Win
@@ -142,8 +143,8 @@ public:
     */
     std::pair<int, int> move_bestcalculation();
 
-    signals:
-        void move_Executed();
+signals:
+    void move_Executed();
     void update_tree_Visualization();
 
 private:

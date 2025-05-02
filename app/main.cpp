@@ -1,47 +1,70 @@
+#include "GameController.h"  // your custom controller
 #include "mainwindow.h"
 #include <QApplication>
 #include <QPushButton>
 #include <QTimer>
 // #include "sample_board.h"
 // #include "tictactoe.h"
- #include "checkers.h"
+#include "checkers.h"
 #include <windows.h>
 
 #include "QApplication"
 #include "QPushButton"
 #include "TreeGraphics.h"
 #include "tictactoe.h"
+#include "startmenu.h"
+#include "startmenu.h"
 
 int main(int argc, char *argv[]) {
-
-#ifdef _WIN32
-    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
-        freopen("CONOUT$", "w", stdout);
-        freopen("CONOUT$", "w", stderr);
-    }
-#endif
     QApplication app(argc, argv);
     MainWindow window;
-    window.setWindowTitle("MinMax Visualizers");
+    window.setFixedSize(600,800);
+    GameController controller;
+    window.setStyleSheet(R"(
+    QMainWindow {
+        background-color: #1e1e2f;
+        border: 8px solid qlineargradient(
+            x1:0, y1:0, x2:1, y2:1,
+            stop:0 #7f5af0,
+            stop:0.5 #5dfdcf,
+            stop:1 #7f5af0
+        );
+        border-radius: 20px;
+        padding: 12px;
+    }
 
-    /*Tic Tac Toe Game Code*/
-    TicTacToe board_game(&window);
-    TreeGraphics treeWidget(nullptr, &board_game);
-    QObject::connect(&board_game, &TicTacToe::update_tree_Visualization, &treeWidget, &TreeGraphics::update_Tree);
-    QObject::connect(&board_game, &TicTacToe::move_Executed, &treeWidget, &TreeGraphics::update_Tree);
-    treeWidget.show();
-    // /*----------------------------------*/
+    QWidget {
+        font-family: 'Segoe UI';
+        font-size: 14px;
+    }
 
-    /*Checkers Game Run*/
-//     Checkers board_game;
-//     board_game.populate_board(true);
-//    board_game.turns(20, P1);
-    /*------------------------------------*/
+    QPushButton#menuButton {
+        background-color: #5dfdcf;
+        border: 2px solid #7f5af0;
+        border-radius: 10px;
+        padding: 6px 12px;
+        color: black;
+        font-weight: bold;
+    }
 
-    //    board_game.turns(200);
-    window.setCentralWidget(&board_game);
-    window.show();
-    //    board_game.find_best_move();
+    QPushButton#menuButton:hover {
+        background-color: #7f5af0;
+        color: white;
+    }
+
+    QPushButton#menuButton:pressed {
+        background-color: #372a75;
+        color: #ffffff;
+    }
+)");
+    auto* menu = new StartMenu(&window);
+    menu->launch_startmenu();
+//    window.setWindowTitle("MinMax Visualizers - TicTacToe + Checkers");
+//    Checkers checkers;
+//    checkers.populate_board(true);
+//    window.setCentralWidget(&controller);
+//    window.show();
 
     return app.exec();
 }
+

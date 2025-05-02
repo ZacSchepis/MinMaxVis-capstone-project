@@ -5,12 +5,12 @@
 #include <QLabel>
 
 TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
-    : Board(parent, 3, 3, enableRightWidget) {
+        : Board(parent, 3, 3, enableRightWidget) {
 
     this->map_piece(P1, ":/res/x_tictactoe32px.png");
     this->map_piece(P2, ":/res/o_tictactoe32px.png");
     if (getRightLayout()) {
-    SetUpRightWidget();
+        SetUpRightWidget();
 
     }
     for (int i = 0; i < 3; ++i) {
@@ -151,7 +151,9 @@ void TicTacToe::Computer_move() {
         }
     }
 }
-
+void TicTacToe::callbackSetup() {
+    // Tennis.
+}
 bool TicTacToe::Findout_Win(PieceType player) {
     for (int i = 0; i < 3; i++) {
         if (get_piece_at(i, 0) == player && get_piece_at(i, 1) == player && get_piece_at(i, 2) == player) return true;
