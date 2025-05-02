@@ -26,7 +26,6 @@ GameController::GameController(QWidget* parent, Board* gameRef) : QWidget{parent
             }
             TicTacToe* ttt = new TicTacToe(this);
             game = ttt;
-            auto t =  ((TicTacToe*)&game);
             ttt->setStyleSheet(QString("background-color: #00a4c9;"));
             TreeGraphics* treeWidget = new TreeGraphics(nullptr,ttt);
             treeWidget->setAttribute(Qt::WA_DeleteOnClose);

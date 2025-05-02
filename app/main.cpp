@@ -1,6 +1,20 @@
 #include "GameController.h"  // your custom controller
 #include "mainwindow.h"
 #include <QApplication>
+#include <QPushButton>
+#include <QTimer>
+// #include "sample_board.h"
+// #include "tictactoe.h"
+#include "checkers.h"
+#include <windows.h>
+
+#include "QApplication"
+#include "QPushButton"
+#include "TreeGraphics.h"
+#include "tictactoe.h"
+#include "startmenu.h"
+#include "startmenu.h"
+
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     MainWindow window;
@@ -43,11 +57,13 @@ int main(int argc, char *argv[]) {
         color: #ffffff;
     }
 )");
-    window.setWindowTitle("MinMax Visualizers - TicTacToe + Checkers");
+    auto* menu = new StartMenu(&window);
+    menu->launch_startmenu();
+//    window.setWindowTitle("MinMax Visualizers - TicTacToe + Checkers");
 //    Checkers checkers;
 //    checkers.populate_board(true);
-    window.setCentralWidget(&controller);
-    window.show();
+//    window.setCentralWidget(&controller);
+//    window.show();
 
     return app.exec();
 }
