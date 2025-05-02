@@ -5,7 +5,7 @@
 #include <QLabel>
 #include <QScrollArea>
 
-Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
+Board::Board(QWidget *parent, int r, int c, bool showRightPanel, bool colour)
     : QWidget{parent}, rows(r), cols(c), cell_size(50), right_panel(nullptr), right_layout(nullptr)
 {
     QHBoxLayout *outer_layout = new QHBoxLayout(this);
