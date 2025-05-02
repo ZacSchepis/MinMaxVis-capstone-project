@@ -8,5 +8,10 @@
         <file>res/o_tictactoe32px.png</file>
         <file>res/red_checker32px.png</file>
         <file>res/x_tictactoe32px.png</file>
+        <file>res/checkers_p1_64x64.png</file>
+        <file>res/checkers_p1_32px.png</file>
+    </qresource>
+    <qresource prefix="/qml">
+        <file>qml/Main.qml</file>
     </qresource>
 </RCC>

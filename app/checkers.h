@@ -7,13 +7,13 @@
 #include <vector>
 #include "board.h"
 #include "minimal_checker.h"
+#include <QMessageBox>
 
 class Checkers : public Board {
 private:
     minimal_checker guts;
     PiecePos* pieceToClick;
     PiecePos* pieceFromClick;
-    std::array<int, 2> piece_counter;
     std::array<PieceType, 3> opposing;
     std::list<PiecePos*> pieces;
     /**
@@ -49,7 +49,7 @@ public:
      * @param t - number of turns to do
      * @param pt - piece colour to start on
      */
-    void turns(int t, PieceType pt);
+    void turns(int t, PieceType pt, bool isMaximizing);
     /**
      * @brief Checkers::populate_board Schepis-4/17
      * Populates Checker board with pieces
@@ -69,7 +69,7 @@ public:
      * @param pt - piece type to find the best for
      * @return
      */
-    MoveDecision* BestMove(PieceType pt);
+    MoveDecision* BestMove(PieceType pt, bool isMaximizing);
     /**
      * @brief Checkers::MinMax Schepis-4/17
      * MinMax implementation for Checkers
@@ -77,8 +77,11 @@ public:
      * @param isMaximizing - path if the current player is maximizing
      * @param pt - piece/colour type to look for
      * @param c - Internal data structure to use
+     * @param isMaximizing - should this move be maximizing
      * @return
      */
-    int MinMax(int recursionLevel, bool isMaximizing, PieceType pt, minimal_checker c);
+    int MinMax(int recursionLevel, bool isMaximizing, PieceType pt, minimal_checker c, int alpha, int beta);
+    void ForceCaptureMoves(std::vector<PieceMoves*> pm);
+    void callbackSetup() override;
 };
 #endif //APP_CHECKERS2_H

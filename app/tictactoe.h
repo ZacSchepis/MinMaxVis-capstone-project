@@ -239,22 +239,12 @@ private:
     * This function is typically used in conjunction with PreviewNextMove().
     */
     void ClearPreview();
+    void callbackSetup() override;
 
-    /**
-    * @brief SetUpRightWidget
-    * Initializes and configures the right-side UI panel for the Tic-Tac-Toe board.
-    * Adds labels to display the current board score and suggested moves for both
-    * the player and computer. Also creates and connects control buttons for previewing
-    * the next move, clearing the preview, and executing the computer's move.
-    *
-    * This method assumes that the right-side layout (`getRightLayout()`) is already
-    * initialized and available. It should only be called if `enableRightWidget` is true.
-    */
-    void SetUpRightWidget();
 
-    QLabel* boardScoreLabel;
-    QLabel* bestPlayerMoveLabel;
-    QLabel* bestComputerMoveLabel;
+
+
+
 };
 
 #endif // TICTACTOE_H

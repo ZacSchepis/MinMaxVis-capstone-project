@@ -4,12 +4,12 @@
 #include <iostream>
 #include <algorithm>
 #include <random>
-Checkers::Checkers(QWidget *parent) : Board(parent, 8, 8), pieces(), piece_counter(), opposing() {
-    this->map_piece(P2, ":/res/red_checker32px.png");
-    this->map_piece(P1, ":/res/black_checker32px.png");
+Checkers::Checkers(QWidget *parent) : Board(parent, 8, 8, false, true), pieces(), opposing(), guts(0) {
+    this->map_piece(P2, ":/res/red_checker32px");
+    this->map_piece(P1, ":res/checkers_p1_32px.png");
 //    PiecePos initialClickStates = {-1, -1, error_state, false};
-    this->piece_counter[P1-1] = 0;
-    this->piece_counter[P2-1] = 0;
+    this->guts.piece_counter[P1-1] = 0;
+    this->guts.piece_counter[P2-1] = 0;
     this->opposing[0] = empty_state;
     this->opposing[P1] = P2;
     this->opposing[P2] = P1;
@@ -32,13 +32,13 @@ void Checkers::setClickedPiece(int r, int c) {
         pieceToClick = guts.get_piece_position(r, c);
         std::cout << "Set to: P" <<pieceToClick->piece <<" (" << pieceToClick->row << ", " << pieceToClick->col <<")" << std::endl;
         std::cout << "And then the piece to generate moves for? ";
-        std::cout << "Did it mutate the piece count?" << this->piece_counter[P1-1] << ", " << this->piece_counter[P2-1] << std::endl;
+        std::cout << "Did it mutate the piece count?" << this->guts.piece_counter[P1-1] << ", " << this->guts.piece_counter[P2-1] << std::endl;
         print_p(pieceFromClick);
         auto* possible = guts.generate_moves(pieceFromClick);
         bool isValid = false;
         auto validMove = std::pair<PiecePos*, PiecePos*>();
-        if(!possible->empty()){
-            for(const auto& m : *possible){
+        if(!possible->moves.empty()){
+            for(const auto& m : possible->moves){
                 print_p(m.first);
                 if((m.first->row == pieceToClick->row) && (m.first->col == pieceToClick->col)){
                     isValid = true;
@@ -48,6 +48,7 @@ void Checkers::setClickedPiece(int r, int c) {
             }
         }
         if(!isValid) {
+            QMessageBox::information(this, "Invalid Move", "Your move isn't valid. Please select a different move.");
             pieceToClick = nullptr;
             pieceFromClick = nullptr;
             return;
@@ -61,11 +62,16 @@ void Checkers::setClickedPiece(int r, int c) {
 //        this->p1_turn = true;
 
         std::cout << "Reset both pieces after making move" << std::endl;
-        auto move = this->BestMove(P2);
+        auto move = this->BestMove(P2, true);
         auto pieceActual = guts.get_piece_position(move->pOrigin->row, move->pOrigin->col);
         guts.apply_move(pieceActual, move->pEnd, move->pCapture, this);
         repaint();
-
+        PieceType winner = error_state;
+        if(guts.no_legal_moves(P1) ) winner = P2;
+        else if(guts.no_legal_moves(P2)) winner = P1;
+        if(winner != error_state){
+            QMessageBox::information(this, "Winner!!!", QString("Player %1 has won!").arg(winner));
+        }
     } else {
         pieceToClick = nullptr;
         pieceFromClick = nullptr;
@@ -112,6 +118,8 @@ int Checkers::populate_board(bool pVsAi) {
         alter = !alter;
 
     }
+//    this->add_place(0, 1, P2);
+//    guts.piece_counter[P2-1]++;
     std::cout << "Pieces in theory: " << guts.pieces.size() << std::endl;
 //    std::move(this->pieces, )
     toggle_space_connection(pVsAi);
@@ -126,16 +134,17 @@ int Checkers::colour_scale(PieceType c) {
 }
 
 
-void Checkers::turns(int t, PieceType pt){
+void Checkers::turns(int t, PieceType pt, bool isMaximizing){
     if(t == 0) return;
     QTimer::singleShot(500, this, [=](){
         repaint();
         std::cout << "Start turn " << t << std::endl;
-        auto b = BestMove(pt);
+        auto b = BestMove(pt, isMaximizing);
         auto actual = guts.get_piece_position(b->pOrigin->row, b->pOrigin->col);
         guts.apply_move(actual, b->pEnd, b->pCapture, this);
+        guts.incr_turn_count();
         repaint();
-        this->turns(t-1, next_colour(pt));
+        this->turns(t-1, next_colour(pt), !isMaximizing);
     });
 }
 
@@ -150,47 +159,75 @@ void Checkers::print_peices() {
     }
 }
 
-int Checkers::MinMax(int recursionLevel, bool isMaximizing, PieceType pt, minimal_checker c) {
+int Checkers::MinMax(int recursionLevel, bool isMaximizing, PieceType pt, minimal_checker c, int alpha, int beta) {
     if(recursionLevel == 0 || c.is_terminal_node()) {
         return c.evaluate_board();
     }
-    int max_score = INT_MIN;
+    int best_score =( pt == P1) ? INT_MIN : INT_MAX;
+
+//    int max_score = pt == P1 ? INT_MIN : INT_MAX;
     auto* pieces_ = c.clone_pieces();
-    if(!isMaximizing) max_score = INT_MAX;
     for(const auto& p : *pieces_) {
         if(p->piece != pt) continue;
-        for(const auto m : *c.generate_moves(p)){
+        auto moveStat = c.generate_moves(p);
+        for(const auto m : moveStat->moves){
             auto b = c.apply_move(p, m.first, m.second, nullptr);
-            int evaluationRes = MinMax(recursionLevel-1, !isMaximizing, next_colour(pt), c);
+            minimal_checker c2(c.get_turn_count());
+            c.clone_pieces(&c2.pieces);
+            int evaluationRes = MinMax(recursionLevel-1, !isMaximizing, next_colour(pt), c2, alpha, beta);
             c.undo_move(p, m.first, b, nullptr);
             if(isMaximizing) {
-                max_score = std::max(evaluationRes, max_score);
+
+                best_score = std::max(evaluationRes, best_score);
+                alpha = std::max(alpha, evaluationRes);
+                if(beta <= alpha) {
+                    return best_score; // beta cut off
+                }
+
             } else {
-                max_score = std::min(evaluationRes, max_score);
+                best_score = std::min(evaluationRes, best_score);
+                beta = std::min(beta, evaluationRes);
+                if(beta <= alpha) return best_score; // alpha cut off
             }
         }
     }
-    return max_score;
+    return best_score;
 }
-
-MoveDecision* Checkers::BestMove(PieceType pt) {
+void
+Checkers::ForceCaptureMoves(std::vector<PieceMoves*> pm){
+//    bool hasJumps = std::any_of(pm.begin(), pm.end(),
+//                                [](PieceMoves* m) { return  m->hasJump;});
+//    if(hasJumps){
+//        pm.erase(std::remove_if(pm.begin(), pm.end(),
+//                                [](PieceMoves* m) { return !m->hasJump;}), pm.end());
+//    }
+}
+void Checkers::callbackSetup() {
+    populate_board(true);
+}
+MoveDecision* Checkers::BestMove(PieceType pt, bool isMaximizing) {
     std::cout << "Begin best move find!" << std::endl;
     std::cout << "Pieces in theory: " << guts.pieces.size() << std::endl;
 
     int max_score = INT_MIN;
     auto best_move = new MoveDecision{nullptr, nullptr, nullptr, INT_MIN};
-    minimal_checker temp_;
+    minimal_checker temp_(guts.get_turn_count());
 
     auto* pieces_ = guts.clone_pieces();
     guts.clone_pieces(&temp_.pieces);
     auto start = std::chrono::high_resolution_clock::now();
+    int lookAhead = 4;
+    if(pt == P2 && guts.piece_counter[P2-1] < 5) {
+        lookAhead = 5;
+    }
     for(const auto& p : *pieces_) {
         if(p->piece != pt) continue;
-        for(const auto m : *temp_.generate_moves(p)) {
+        auto moveStat = temp_.generate_moves(p);
+        for(const auto m : moveStat->moves) {
             auto b = temp_.apply_move(p, m.first, m.second, nullptr);
-            int eval_res = MinMax(3, true, P2, temp_);
+            int eval_res = MinMax(lookAhead, isMaximizing, pt, temp_, INT_MIN, INT_MAX);
             temp_.undo_move(p, m.first, b, nullptr);
-            if(eval_res > max_score){
+            if(eval_res >= max_score){
                 best_move->pOrigin = p;
                 best_move->pEnd = m.first;
                 best_move->pCapture = m.second;

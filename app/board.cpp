@@ -20,8 +20,10 @@ Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
     this->map_piece(P2, "");
 
     // Adjust the width only if right panel is shown
-    int extra_width = showRightPanel ? 350 : 0;
-    this->setFixedSize((c * this->cell_size) + extra_width, r * this->cell_size);
+    int extra_width = showRightPanel ? 400 : 0;
+    int extra_height = showRightPanel ? 50 : 0;
+    this->setFixedSize((c * this->cell_size) + extra_width, extra_height+ (r * this->cell_size));
+//    this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
     // Initialize board state and add buttons
     board_state = new PieceType*[rows];
@@ -30,9 +32,14 @@ Board::Board(QWidget *parent, int r, int c, bool showRightPanel)
         for (int j = 0; j < c; j++) {
             board_state[i][j] = empty_state;
             QPushButton *button = new QPushButton(this);
+            button->setObjectName("gameButton");
             button->setFixedSize(48, 48);
             bool is_black = (i + j) % 2 == 1;
-            button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black" : "white"));
+            if(colour){
+                button->setStyleSheet(QString("background-color: %1;").arg(is_black ? "black" : "white"));
+            } else {
+                button->setStyleSheet(QString("background-color: white; border: 2px solid black;"));
+            }
             grid->addWidget(button, i, j);
         }
     }

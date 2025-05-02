@@ -128,6 +128,81 @@ PieceType** TicTacToe::Visualize_Move(PieceType** state, int r, int c, PieceType
     return next_stateofBoard;
 }
 
+void TicTacToe::callbackSetup() {
+    // Tennis.
+}
+TicTacToe::TicTacToe(QWidget *parent, bool enableRightWidget)
+    : Board(parent, 3, 3, enableRightWidget) {
+
+    this->map_piece(P1, ":/res/x_tictactoe32px.png");
+    this->map_piece(P2, ":/res/o_tictactoe32px.png");
+    if (getRightLayout()) {
+        boardScoreLabel = new QLabel("Board Score:", this);
+        boardScoreLabel->setStyleSheet("color: black;");
+        getRightLayout()->addWidget(boardScoreLabel);
+
+        bestPlayerMoveLabel = new QLabel("Best Move for Player: ", this);
+        bestPlayerMoveLabel->setStyleSheet("color: black;");
+        getRightLayout()->addWidget(bestPlayerMoveLabel);
+
+        bestComputerMoveLabel = new QLabel("Best Move for Computer: ", this);
+        bestComputerMoveLabel->setStyleSheet("color: black;");
+        getRightLayout()->addWidget(bestComputerMoveLabel);
+
+        QPushButton* previewNextMoveButton = new QPushButton("Preview Next Move", this);
+        previewNextMoveButton->setStyleSheet("background-color: black; color: white; font-weight: bold;");
+        getRightLayout()->addWidget(previewNextMoveButton);
+        connect(previewNextMoveButton, &QPushButton::clicked, this, &TicTacToe::PreviewNextMove);
+
+        QPushButton* clearPreviewButton = new QPushButton("Clear Preview", this);
+        clearPreviewButton->setStyleSheet("background-color: black; color: white; font-weight: bold;");
+        getRightLayout()->addWidget(clearPreviewButton);
+        connect(clearPreviewButton, &QPushButton::clicked, this, &TicTacToe::ClearPreview);
+
+        QPushButton* computerMoveButton = new QPushButton("Computer Move", this);
+        computerMoveButton->setStyleSheet("background-color: darkblue; color: white; font-weight: bold;");
+        getRightLayout()->addWidget(computerMoveButton);
+        connect(computerMoveButton, &QPushButton::clicked, this, &TicTacToe::Computer_move);
+
+
+    }
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            QPushButton* button = qobject_cast<QPushButton*>(grid->itemAtPosition(i, j)->widget());
+            connect(button, &QPushButton::clicked, [this, i, j]() {
+                this->Player_move(i, j);
+            });
+        }
+    }
+}
+
+void TicTacToe::Player_move(int row, int column) {
+    if (currentTurn != P1) {
+        QMessageBox::information(this, "Wait", "It's not your turn!");
+        return;
+    }
+    if (get_piece_at(row, column) == empty_state) {
+        place(row, column, P1);
+        currentTurn = P2;
+        emit move_Executed();
+        emit update_tree_Visualization();
+        updateBoardScore();
+        updateBestMoves();
+
+        if (Findout_Win(P1)) {
+            Findout_End("Congrats! You have won the game!");
+        } else if (Findout_draw()) {
+            Findout_End("It's a draw!");
+        } else {
+            emit update_tree_Visualization();
+            //QTimer::singleShot(500, this, &TicTacToe::Computer_move);
+        }
+    } else {
+        QMessageBox::warning(this, "Invalid Move", "This cell is already occupied!");
+    }
+
+}
+
 void TicTacToe::Computer_move() {
     if (currentTurn != P2) {
         QMessageBox::information(this, "Wait", "It's not the computer's turn.");
