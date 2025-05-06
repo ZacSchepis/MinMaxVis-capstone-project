@@ -21,8 +21,6 @@ set(PROJECT_SOURCES
         TreeGraphics.cpp
         minimal_checker.cpp
         minimal_checker.h
-        GameController.cpp
-        GameController.h
         startmenu.cpp
         startmenu.h
 )
